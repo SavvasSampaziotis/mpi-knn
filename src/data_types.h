@@ -10,7 +10,7 @@
 
 typedef struct dataPointStruct{
 	int label;
-	double point[2];
+	double *point;
 } dataPoint;
 
 typedef struct neighborPointStruct{

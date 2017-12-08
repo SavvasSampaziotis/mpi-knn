@@ -23,22 +23,18 @@ void allocateArray(double** A, int N, int D)
 	Reads data from file...
 */
 void readData(dataPoint **dataSet, int N, int D){
-	int i;
+	int i,j;
 	
 	*dataSet = (dataPoint*) malloc(N*sizeof(dataPoint));
 	
 	for(i=0; i<N; i++){
-		/*dataPoint temp;
-		temp.label = i;
-		temp.point[0] = i;
-		temp.point[1] = i+1;*/
-		//memcpy( &(dataSet[i]), &temp, sizeof(temp) );
-		//dataSet[i].dataPointnt[i] = (double*) malloc(D*sizeof(double));
-
 
 		(*dataSet)[i].label = i;
-		(*dataSet)[i].point[0]= i;
-		(*dataSet)[i].point[1]= i+1;
+		(*dataSet)[i].point = (double*) malloc(D*sizeof(double));
+		for(j=0; j<D; j++)
+			(*dataSet)[i].point[j] = i*100+j;
+		//(*dataSet)[i].point[0]= i;
+		//(*dataSet)[i].point[1]= i+1;
 	}
 }
 
