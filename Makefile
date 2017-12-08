@@ -3,7 +3,7 @@ CC = gcc
 
 TARGET=test_knn
 
-CFLAGS= -O3 -g -fopenmp
+CFLAGS=  -g -fopenmp 
 
 BIN=./out
 SRC=./src
@@ -12,7 +12,7 @@ OBJ = $(BIN)/knn_utilities.o $(BIN)/array_utilities.o
 
 all: $(TARGET)
 
-$(TARGET): knn_utilities array_utilities $(SRC)/$(TARGET).c 
+$(TARGET): clean knn_utilities array_utilities $(SRC)/$(TARGET).c 
 	@echo [MAKE]: Building and Linking $(TARGET)
 	@$(CC) $(SRC)/$@.c -o $(BIN)/$(TARGET) $(OBJ) $(CFLAGS)
 

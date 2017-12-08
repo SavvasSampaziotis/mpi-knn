@@ -25,14 +25,6 @@
 */
 void knn(double** A, int N, int D, int K, int** KNN, double** KNN_dist){
 
-
-	#pragma omp parallel
-	{
-		printf( "Savvas %d", omp_get_thread_num() );
-	}
-
-
-
 }  
 
 
