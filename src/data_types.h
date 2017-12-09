@@ -13,12 +13,10 @@ typedef struct dataPointStruct{
 	double *point;
 } dataPoint;
 
-typedef struct neighborPointStruct{
+typedef struct neighbourPointStruct{
 	dataPoint dataPoint;
 	double dist;
-} neighbour;
-
-
+} nnPoint;
 
 
 

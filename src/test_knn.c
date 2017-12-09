@@ -1,31 +1,85 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
-//#include <boost/smart_ptr/shared_array.hpp>
+#include <sys/time.h>
 
 #include "data_types.h"
 
+void test_distance_matrix();
 
 
-int main(int argc, char** argv){
-	
-	int N,D;	
+
+
+struct timeval startwtime, endwtime;
+
+int N,D;	
 	dataPoint *dataSet;
 
-	N = 10;
-	D = 2;
-	
+int main(int argc, char** argv){
+	int i;
+
+	N = 1000;
+	D = 50;
 	
 	readData(&dataSet, N,D);
 
-	int i;
-	for (i = 0; i<N; i++){
+
+	/*
+	for (i = 0; i<N; i++)
 		printDataPoint(dataSet[i],D);
-		printf("\n");
-	}
+	
+	int K = 2;
+	nnPoint** KNN;
+	knn(&dataSet,  N,D,K, &KNN);
+	*/
+	
+	
+	test_distance_matrix();
 
 	return 0;
 }
 
+
+/**
+	Some Simple Benchmarking for the parallel calculation of the Distance Matric  
+*/
+void test_distance_matrix(){
+
+	double  seq_time;
+
+	double ** distMatrix;
+
+	gettimeofday (&startwtime, NULL);
+
+	distance_matrix(&dataSet, N,D, &distMatrix);
+
+	gettimeofday (&endwtime, NULL);
+ 	seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
+		      + endwtime.tv_sec - startwtime.tv_sec);
+	printf("\n Serial Time: %f\n", seq_time);
+
+	int i;
+	for(i=0; i<N; i++)
+		free(distMatrix[i]);
+	free(distMatrix);
+
+	gettimeofday (&startwtime, NULL);
+		distance_matrix_OMP(&dataSet, N,D, &distMatrix);
+	gettimeofday (&endwtime, NULL);
+ 	seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
+		      + endwtime.tv_sec - startwtime.tv_sec);
+	printf("\n Parallel Time: %f\n", seq_time);
+	
+
+	//printf("\n*** Distance Matrix ***\n");
+	//printArray(distMatrix,N,N);
+	
+
+	for(i=0; i<N; i++)
+		free(distMatrix[i]);
+	free(distMatrix);
+
+	
+
+}
 
