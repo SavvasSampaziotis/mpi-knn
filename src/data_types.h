@@ -14,7 +14,7 @@ typedef struct dataPointStruct{
 } dataPoint;
 
 typedef struct neighbourPointStruct{
-	dataPoint dataPoint;
+	dataPoint* dpoint;
 	double dist;
 } nnPoint;
 

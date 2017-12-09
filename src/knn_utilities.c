@@ -11,13 +11,13 @@
 
 #include "stdio.h"
 #include <stdlib.h>
-
+#include <string.h>
 #include "data_types.h"
 
 double calc_dist(dataPoint A, dataPoint B, int D);
-void distance_matrix(dataPoint **dataSet, int N, int D, double*** distMatrix);
-void distance_matrix_OMP(dataPoint **dataSet, int N, int D, double*** distMatrix);
-
+void distance_matrix(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix);
+void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix);
+int cmpfunc (const void * a, const void * b);
 
 /**
 	The knn function calculates the K nearest neighbors for each element in array A.
@@ -37,15 +37,23 @@ void knn(dataPoint **dataSet, int N, int D, int K, nnPoint*** KNN ){
 	*KNN = (nnPoint**) malloc(N*sizeof(nnPoint*));
 
 	// Calculate the Distance Matrix. 
-	double ** distMatrix;
-	distance_matrix(dataSet, N,D, &distMatrix);
-
+	nnPoint ** distMatrix;
+	distance_matrix_OMP(dataSet, N,D, &distMatrix);
 
 
 	int i;
 	for(i=0; i<N; i++){
 		(*KNN)[i] = (nnPoint*) malloc(K*sizeof(nnPoint));
+		 qsort(distMatrix[i], N, sizeof(nnPoint), cmpfunc);
+		 int j;
+		 for(j=0; j<K; j++){ // Disregard first element
 
+		 	(*KNN)[i][j].dist = distMatrix[i][j+1].dist;
+		 	(*KNN)[i][j].dpoint = distMatrix[i][j+1].dpoint;
+		 
+			//printDataPoint( *((*KNN)[i][j].dpoint), D);
+		 }
+		 	
 	}
 
 	// Free distance matrix
@@ -55,39 +63,53 @@ void knn(dataPoint **dataSet, int N, int D, int K, nnPoint*** KNN ){
 }  
 
 /**
-	knn_searc performs the distance calculation for
+	distance_matrix calculates all distances between all datapoints and stores 
+	them in matric distMatrix [N,N] in an efficient way.
+
+	distMatrix is symmetric with its diagonal==0. Thus, the calculation is 
+	done efficiently, by performing N(N-1)/2 calc_dist calls instead of N^2.  
 */
-void distance_matrix(dataPoint **dataSet, int N, int D, double*** distMatrix)
+void distance_matrix(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix)
 {		
-	*distMatrix = (double**) malloc(N*sizeof(double*));		
+	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));		
 	int i;
 	for(i=0; i<N; i++)
-		(*distMatrix)[i] = (double*) malloc(N*sizeof(double));
+		(*distMatrix)[i] = (nnPoint*) malloc(N*sizeof(nnPoint));
 	for(i=0; i<N; i++)
 	{
-		(*distMatrix)[i][i] = 0;
+		(*distMatrix)[i][i].dist = 0;
+		(*distMatrix)[i][i].dpoint = &( (*dataSet)[i] );
+
 		int j;
 		for(j=i+1; j<N; j++)
 		{
 			double d = calc_dist((*dataSet)[i],(*dataSet)[j], D);
-			(*distMatrix)[i][j] = d;
-			(*distMatrix)[j][i] = d;
+			(*distMatrix)[i][j].dist = d;
+			(*distMatrix)[i][j].dpoint = &( (*dataSet)[j] );
+			
+			(*distMatrix)[j][i].dist = d;
+			(*distMatrix)[j][i].dpoint = &( (*dataSet)[i] );
 		}
 	}
 }
 
 /**
-	knn_searc performs the distance calculation for
+	distance_matrix_OMP calculates all distances between all datapoints and stores 
+	them in matric distMatrix [N,N] in an efficientand way as well as in parallel.
+
+	distMatrix is symmetric with its diagonal==0. Thus, the calculation is 
+	done efficiently, by performing N(N-1)/2 calc_dist calls instead of N^2.
+
 */
-void distance_matrix_OMP(dataPoint **dataSet, int N, int D, double*** distMatrix)
+void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix)
 {
 	omp_set_num_threads(4);
 
-	*distMatrix = (double**) malloc(N*sizeof(double*));	
+	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));	
 	
 	int i;
 	for(i=0; i<N; i++)
-		(*distMatrix)[i] = (double*) malloc(N*sizeof(double));
+		(*distMatrix)[i] = (nnPoint*) malloc(N*sizeof(nnPoint));
 	
 	/* This for-loop pairs the nested loops into workload of equal size.
 		 	1st j-loop with Nth loop, 2nd with (N-1)th etc.
@@ -95,23 +117,34 @@ void distance_matrix_OMP(dataPoint **dataSet, int N, int D, double*** distMatrix
 	#pragma omp parallel for schedule(static) 
 		for(i=0; i<N/2; i++)
 		{
-			(*distMatrix)[i][i] = 0;
-			(*distMatrix)[N-i-1][N-i-1] = 0;
+			(*distMatrix)[i][i].dist = 0;
+			(*distMatrix)[i][i].dpoint = &( (*dataSet)[i] );
+
+			(*distMatrix)[N-i-1][N-i-1].dist = 0;
+			(*distMatrix)[N-i-1][N-i-1].dpoint = &( (*dataSet)[N-i-1] );
 
 			int j;
 			for(j=i+1; j<N; j++)
 			{
 				double d = calc_dist((*dataSet)[i],(*dataSet)[j], D);
-				(*distMatrix)[i][j] = d;
-				(*distMatrix)[j][i] = d;
+				(*distMatrix)[i][j].dist = d;
+				(*distMatrix)[i][j].dpoint = &( (*dataSet)[j] );
+				
+				(*distMatrix)[j][i].dist = d;
+				(*distMatrix)[j][i].dpoint = &( (*dataSet)[i] );
 			}
 			for(j=N-i-1; j<N; j++){
 				double d = calc_dist((*dataSet)[N-i-1],(*dataSet)[j], D);
-				(*distMatrix)[N-i-1][j] = d;
-				(*distMatrix)[j][N-i-1] = d;
+				(*distMatrix)[N-i-1][j].dist = d;
+				(*distMatrix)[N-i-1][j].dpoint = &( (*dataSet)[j] );
+				
+				(*distMatrix)[j][N-i-1].dist = d;
+				(*distMatrix)[j][N-i-1].dpoint = &( (*dataSet)[N-i-1] );
 			}
 		}
 }
+
+
 /**
 	Calculates distance between datapoint A and B. 
 	Each of these are double arrays of length D.
@@ -128,7 +161,15 @@ double calc_dist(dataPoint A, dataPoint B, int D){
 	return dist;
 }
 
+/**
+	Used for qsort. Compares two nnPoint, by distance
+*/
+int cmpfunc (const void * a, const void * b) {
+   nnPoint* p1 = (nnPoint*) a;
+   nnPoint* p2 = (nnPoint*) b;
 
+   return p1->dist - p2->dist;
+}
 
 
 void test(int* a, int N) {
