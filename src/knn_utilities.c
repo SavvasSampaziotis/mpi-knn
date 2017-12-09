@@ -51,11 +51,8 @@ void knn(dataPoint **dataSet, int N, int D, int K, nnPoint*** KNN ){
 			 qsort(distMatrix[i], N, sizeof(nnPoint), cmpfunc);
 			 int j;
 			 for(j=0; j<K; j++){ // Disregard first element
-
 			 	(*KNN)[i][j].dist = distMatrix[i][j+1].dist;
 			 	(*KNN)[i][j].dpoint = distMatrix[i][j+1].dpoint;
-			 
-				//printDataPoint( *((*KNN)[i][j].dpoint), D);
 			 }
 			 	
 		}
@@ -104,6 +101,11 @@ void distance_matrix(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix)
 	distMatrix is symmetric with its diagonal==0. Thus, the calculation is 
 	done efficiently, by performing N(N-1)/2 calc_dist calls instead of N^2.
 
+	Moreover each row of the matric is calculated in parallel (chunks). 
+	The workload of each OpenMP thread is such that the total load is constant.
+	 The 0th line is paired with the Nth, the 1st with N-1th an so on.
+	 This is due to the symmetrical-calculation of the matrix. 
+
 */
 void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix)
 {
@@ -121,6 +123,7 @@ void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatri
 	#pragma omp parallel for schedule(static) 
 		for(i=0; i<N/2; i++)
 		{
+			//This fills up the diagonal
 			(*distMatrix)[i][i].dist = 0;
 			(*distMatrix)[i][i].dpoint = &( (*dataSet)[i] );
 
