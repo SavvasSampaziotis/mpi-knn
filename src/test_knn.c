@@ -18,23 +18,29 @@ int N,D;
 int main(int argc, char** argv){
 	int i;
 
-	N = 1000;
-	D = 50;
+	N = 10;
+	D = 3;
 	
 	readData(&dataSet, N,D);
 
-
-	/*
-	for (i = 0; i<N; i++)
-		printDataPoint(dataSet[i],D);
+	//for (i = 0; i<N; i++)
+//		printDataPoint(dataSet[i],D);
 	
-	int K = 2;
+	int K = 3;
 	nnPoint** KNN;
 	knn(&dataSet,  N,D,K, &KNN);
-	*/
+
+	for (i = 0; i<N; i++){
+		printf("----\n");
+		printDataPoint(*(KNN[i][0].dpoint), D);
+		printDataPoint(*(KNN[i][1].dpoint), D);
+		printDataPoint(*(KNN[i][2].dpoint), D);
+		//printf("\tDist = %f\n", KNN[i][1].dpoint->point[0]);
+		//printf("\tDist = %f\n", KNN[i][1].dist);
+	}
+		
 	
-	
-	test_distance_matrix();
+	//test_distance_matrix();
 
 	return 0;
 }
@@ -47,7 +53,7 @@ void test_distance_matrix(){
 
 	double  seq_time;
 
-	double ** distMatrix;
+	nnPoint ** distMatrix;
 
 	gettimeofday (&startwtime, NULL);
 

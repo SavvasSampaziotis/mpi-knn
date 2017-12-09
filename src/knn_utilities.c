@@ -42,19 +42,23 @@ void knn(dataPoint **dataSet, int N, int D, int K, nnPoint*** KNN ){
 
 
 	int i;
-	for(i=0; i<N; i++){
-		(*KNN)[i] = (nnPoint*) malloc(K*sizeof(nnPoint));
-		 qsort(distMatrix[i], N, sizeof(nnPoint), cmpfunc);
-		 int j;
-		 for(j=0; j<K; j++){ // Disregard first element
+	for(i=0; i<N; i++)
+		(*KNN)[i] = (nnPoint*) malloc(K*sizeof(nnPoint)); 	
 
-		 	(*KNN)[i][j].dist = distMatrix[i][j+1].dist;
-		 	(*KNN)[i][j].dpoint = distMatrix[i][j+1].dpoint;
-		 
-			//printDataPoint( *((*KNN)[i][j].dpoint), D);
-		 }
-		 	
-	}
+	#pragma omp parallel for schedule(static) num_threads(4)
+		for(i=0; i<N; i++)
+		{
+			 qsort(distMatrix[i], N, sizeof(nnPoint), cmpfunc);
+			 int j;
+			 for(j=0; j<K; j++){ // Disregard first element
+
+			 	(*KNN)[i][j].dist = distMatrix[i][j+1].dist;
+			 	(*KNN)[i][j].dpoint = distMatrix[i][j+1].dpoint;
+			 
+				//printDataPoint( *((*KNN)[i][j].dpoint), D);
+			 }
+			 	
+		}
 
 	// Free distance matrix
 	for(i=0; i<N; i++)
