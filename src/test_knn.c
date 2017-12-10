@@ -18,27 +18,34 @@ int N,D;
 int main(int argc, char** argv){
 	int i;
 
-	N = 10;
-	D = 3;
+	//N = 10;
+	//D = 3;
 	
-	readData(&dataSet, N,D);
+	readData("./data/formatted_data/mnist_train_svd.txt", &dataSet, &N, &D);
+	//readData("./data/formatted_data/mnist_train.txt", &dataSet, &N, &D);
 
-	//for (i = 0; i<N; i++)
-//		printDataPoint(dataSet[i],D);
+	/*for (i = 0; i<N; i++)
+		printDataPoint(dataSet[i],D);*/
 	
 	int K = 3;
 	nnPoint** KNN;
 	knn(&dataSet,  N,D,K, &KNN);
 
 	for (i = 0; i<N; i++){
-		printf("----\n");
-		printDataPoint(*(KNN[i][0].dpoint), D);
+		printf("\n");
+		int k;
+
+		for(k=0; k<K; k++)
+			printf("%d ", (KNN[i][k].dpoint->label));
+
+		for(k=0; k<K; k++)
+			printf("%d ", (KNN[i][k].dist));
+
+		/*printDataPoint(*(KNN[i][0].dpoint), D);
 		printDataPoint(*(KNN[i][1].dpoint), D);
-		printDataPoint(*(KNN[i][2].dpoint), D);
-		//printf("\tDist = %f\n", KNN[i][1].dpoint->point[0]);
-		//printf("\tDist = %f\n", KNN[i][1].dist);
+		printDataPoint(*(KNN[i][2].dpoint), D);	*/
 	}
-		
+		printf("\n");
 	
 	//test_distance_matrix();
 

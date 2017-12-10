@@ -57,7 +57,7 @@ void knn(dataPoint **dataSet, int N, int D, int K, nnPoint*** KNN ){
 			 	
 		}
 
-	// Free distance matrix
+	// Free distance matrix, AFTER we are done with the 
 	for(i=0; i<N; i++)
 		free(distMatrix[i]);
 	free(distMatrix);
@@ -176,14 +176,4 @@ int cmpfunc (const void * a, const void * b) {
    nnPoint* p2 = (nnPoint*) b;
 
    return p1->dist - p2->dist;
-}
-
-
-void test(int* a, int N) {
-  int pass = 1;
-  int i;
-  for (i = 1; i < N; i++) {
-    pass &= (a[i-1] <= a[i]);
-  }
-  printf(" TEST %s\n", (pass) ? "PASSed" : "FAILed");
 }

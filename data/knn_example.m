@@ -25,7 +25,7 @@ varX     = 'train_X';
 varL     = 'train_labels';
 
 % kNN parameters
-kNbr = 30;
+kNbr = 3;
 
 
 %% (BEGIN)
@@ -39,11 +39,14 @@ fprintf('...reading data...\n');
 fprintf('   - using file %s\n', filename)
 
 % IO data file
-ioData = matfile( [filename '.mat'] );
+ioData = matfile( ['./raw_data/',filename '.mat'] );
 
 % read variables
 X = ioData.(varX);
 L = ioData.(varL);
+
+X = X(1:10,:);
+L = L(1:10);
 
 % number of points
 nPoint = size( X, 1 );
@@ -90,8 +93,23 @@ fprintf('   - match percentage: %3.1f %%\n', ...
 
 fprintf('\n *** end %s ***\n\n',mfilename);
 
+labels = zeros(size(IDX));
+for i=1:length(IDX)
+   labels(i,:) = L(IDX(i,:))';
+end
 
+lc = [7 5 7 
+4 5 10 
+5 2 4 
+4 4 10 
+1 7 2 
+7 7 2 
+4 5 10 
+10 5 7 
+7 7 4 
+10 2 7 ];
 
+labels - lc
 %%------------------------------------------------------------
 %
 % AUTHORS
