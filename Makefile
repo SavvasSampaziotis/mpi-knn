@@ -1,9 +1,11 @@
 
-CC = gcc
+CC = mpicc
+#gcc
 
-TARGET=test_knn
+#TARGET=test_knn
+TARGET=test_mpi
 
-CFLAGS=  -g -fopenmp 
+CFLAGS= -fopenmp -g
 
 BIN=./out
 SRC=./src

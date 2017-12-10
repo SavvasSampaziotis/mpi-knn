@@ -114,7 +114,7 @@ void printArray(double** A, int N, int M)
 	int i,j;
 	for (i = 0; i<N; i++){
 		for (j = 0; j<M; j++)
-			printf("%f ",A[i][j]);
+			printf("%f ",(A)[i][j]);
 		printf("\n");
 	}
 }
