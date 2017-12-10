@@ -1,12 +1,11 @@
 
-#include "stdio.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "data_types.h"
 
-
-#include <string.h>
-
+/*
 void allocateArray(double** A, int N, int D)
 {
 	int i;
@@ -18,17 +17,66 @@ void allocateArray(double** A, int N, int D)
 		(A[i]) = (double *) malloc(D*sizeof(double));
 	}	
 }
+*/
+
+/**
+	Reads data from file. 
+
+	Reference COde from Tutorials Point and  http://www.cplusplus.com/reference/
+
+*/
+void readData(const char* filename, dataPoint **dataSet, int* N, int* D )
+{
+	// Open File
+	FILE *fp;
+	fp = fopen( filename, "r" );
+
+	if(fp == 0){
+		printf("PROBLEM Opening file\n");
+		return;
+	}
+
+	// Read File Header and parse dataSet size and dimensionality
+	char buff[15];
+	fscanf(fp, "%d\t%d\n", N,D);
+	printf("N=%d \t D=%d \n", *N,*D);
+	//*N = 10;	
+	//*D = 3;
+
+	*dataSet = (dataPoint*) malloc((*N)*sizeof(dataPoint));
+	int i,j;	
+	for(i=0; i<(*N); i++)
+	{
+		(*dataSet)[i].point = (double*) malloc((*D)*sizeof(double));
+		
+		for(j=0; j<(*D); j++)
+		{
+			double  temp = 3;;
+			if (EOF == fscanf(fp, "%lf\t", &temp))
+				printf("ERROR Reading datapoint in %d row, %d column",i,j);
+			(*dataSet)[i].point[j] = temp;
+		}
+
+		int temp = -10;
+		if (EOF == fscanf(fp, "%d\n", &temp))
+				printf("ERROR Reading label in %d row",i);
+		
+		(*dataSet)[i].label = temp;
+	}
+
+	fclose( fp );
+}
 
 /**
 	Reads data from file...
 */
-void readData(dataPoint **dataSet, int N, int D){
+void readDataDUMMY(dataPoint **dataSet, int N, int D){
 	int i,j;
 	
 	*dataSet = (dataPoint*) malloc(N*sizeof(dataPoint));
 	
-	for(i=0; i<N; i++){
-
+	for(i=0; i<N; i++)
+	{
 		(*dataSet)[i].label = i;
 		(*dataSet)[i].point = (double*) malloc(D*sizeof(double));
 		for(j=0; j<D; j++)
@@ -37,18 +85,21 @@ void readData(dataPoint **dataSet, int N, int D){
 }
 
 
-void printDataPoint(dataPoint dp, int D){
+void printDataPoint(dataPoint dp, int D)
+{
 	int i;
 	for (i = 0; i < D; ++i)
-		printf("%f ",dp.point[i]);	
-	printf("\t%d\n", dp.label);
+		printf("%lf ",dp.point[i]);	
+	printf("\t%d", dp.label);
+	printf("\n");
 }
 
 
 /**
 	Prints array of NxD elements 
 */
-void printDataset(dataPoint* dataSet, int N, int D){
+void printDataset(dataPoint* dataSet, int N, int D)
+{
 	int i;
 	for (i = 0; i<N; i++){
 		printDataPoint(dataSet[i],D);
@@ -58,7 +109,8 @@ void printDataset(dataPoint* dataSet, int N, int D){
 
 
 
-void printArray(double** A, int N, int M){
+void printArray(double** A, int N, int M)
+{
 	int i,j;
 	for (i = 0; i<N; i++){
 		for (j = 0; j<M; j++)

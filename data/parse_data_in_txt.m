@@ -1,31 +1,38 @@
+% This script writes the .mat files for the knn test into text files, for
+% the MPI program toy read.
+% 
+% Author: Savvas Sampaziotis
+% 
 
-f = 1;
 datasets = {"mnist_train", "mnist_train_svd"};
 
-fileName = datasets{f};
+for f = 1:2
+    
+    fileName = datasets{f};
+    
+    load( strcat('./raw_data/',fileName ,'.mat'));
+    
+    [N, D] = size(train_X);
+    % For testing purposes only
+    N = 10;
+%     D = 3;
+    
+    n=1:N;  d = 1:D;
 
-load( strcat('./raw_data/',fileName ,'.mat'));
-
-[N, D] = size(train_X);
-% For testing purposes only
-N = 100;
-D = 3;
-
-n=1:N;
-d = 1:D;
-
-joinData = [train_X(n,d), train_labels(n)];
-header = [N,D];
-
-outputFile = strcat('./formatted_data/',fileName, '.txt');
-
-dlmwrite(outputFile, header, ...
-    'delimiter','\t', ...
-    'newline','pc');
-dlmwrite(outputFile, joinData , ...
-    'delimiter','\t', ...
-    'newline','pc', ...
-    '-append');
+    joinData = [train_X(n,d), train_labels(n)];
+    header = [N,D];
+    
+    outputFile = strcat('./formatted_data/',fileName, '.txt');
+    
+    dlmwrite(outputFile, header, ...
+        'delimiter','\t', ...
+        'newline','pc');
+    dlmwrite(outputFile, joinData , ...
+        'delimiter','\t', ...
+        'newline','pc', ...
+        '-append', ...
+        'precision', 16);
+end
 
 % FIle Format:
 % N D  # Header       # D+1
