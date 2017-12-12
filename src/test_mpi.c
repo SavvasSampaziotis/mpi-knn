@@ -26,6 +26,16 @@ int main(int argc, char** argv){
 	readDataDUMMY(&dataSet, N,D);
 	//printDataset( dataSet,  N, D );
 
+	/* Print struct pointers to show memory allocation*/
+	/*
+	printf("DataPoint Address: %d\n", &(dataSet[0]));
+	printf("DataPoint Address: %d\n", &(dataSet[0].index));
+	printf("DataPoint Address: %d\n", &(dataSet[2].label));
+	printf("DataPoint Address: %d\n", &(dataSet[2].point));
+	printf("DataPoint Address: %d\n", &(dataSet[2].point[0]));
+	printf("DataPoint Address: %d\n\n\n", &(dataSet[2].point[1]));
+	*/
+	
 	/* Set up some configuration utilities*/
 	int destRank = rank + 1;
 	int srcRank = rank - 1;
@@ -34,73 +44,73 @@ int main(int argc, char** argv){
 	if (rank == 0)
 		srcRank = size-1;
 
-	MPI_Datatype MPI_DATAPOINT_A, MPI_DATAPOINT_B;
-
+	MPI_Datatype MPI_DATAPOINT_INDEX_LABEL, MPI_DATAPOINT_POINT, istruct;
+	
+	/*
 	const int nfields=2;
     MPI_Aint disps[nfields];
     int blocklens[] = {1,1};
     MPI_Datatype types[] = {MPI_INT, MPI_INT};
     disps[0] = (MPI_Aint) offsetof( dataPoint, index );
     disps[1] = (MPI_Aint) offsetof( dataPoint, label );
-    MPI_Type_create_struct(nfields, blocklens, disps, types, &MPI_DATAPOINT_A);
-    MPI_Type_commit(&MPI_DATAPOINT_A);
+    MPI_Type_create_struct(nfields, blocklens, disps, types, &istruct);
+	*/   
 
-    
-    /*MPI_Datatype typeB[] = {MPI_DOUBLE};
-    MPI_Aint dispB = (MPI_Aint) offsetof( dataPoint, point );
-    MPI_Type_create_struct( 1, &D, &dispB, typeB, &MPI_DATAPOINT_B);
-    
-	*/
-	
-	MPI_Type_contiguous(D, MPI_DOUBLE, &MPI_DATAPOINT_B);
-	MPI_
-	
-	int test;
-    MPI_Type_size(MPI_DATAPOINT_B, &test);
-	printf("SIZE = %d\n", test );
-	MPI_Type_commit(&MPI_DATAPOINT_B);
+   	MPI_Type_contiguous(2, MPI_INT, &istruct);
+   	MPI_Type_create_resized( istruct, 0, \
+     (char *)&(dataSet[1]) - (char *)(&dataSet[0]), &MPI_DATAPOINT_INDEX_LABEL );
+   	// MPI_Type_commit(&MPI_DATAPOINT_INDEX_LABEL);
 
-	printf("---------TYPE CREATED\n");
+    MPI_Type_contiguous(D, MPI_DOUBLE, &MPI_DATAPOINT_POINT);
+	//MPI_Type_create_resized( istruct, offsetof(dataPoint, point), 
+    // (char *)&(dataSet[1]) - (char *)(&dataSet[0]), &MPI_DATAPOINT_INDEX_LABEL );
+    MPI_Type_commit(&MPI_DATAPOINT_POINT);
+	////printf("---------TYPE CREATED\n");
 
-	//N = 1;
 	if(rank==0)
 	{	
-		MPI_Send( dataSet, 1, MPI_DATAPOINT_A, destRank, 0, MPI_COMM_WORLD);
+		//MPI_Send( dataSet, N, MPI_DATAPOINT_INDEX_LABEL, destRank, 0, MPI_COMM_WORLD);
 
-		double * test = (double*) malloc(D*sizeof(double));
-    	test[0] = 11;
-		MPI_Send( test, N, MPI_DATAPOINT_B, destRank, 1, MPI_COMM_WORLD);
+		// Buff contains the pointers of all point-arrays of datapoint struct
+		/*double** buff = (double**) malloc(D*sizeof(double*));
+		int i;
+		for(i=0;i<N;i++)
+			buff[i] = dataSet[i].point;*/
+		//MPI_Send( buff, N, MPI_DATAPOINT_POINT, destRank, 1, MPI_COMM_WORLD);
+		
+		//printArray(buff,N,D);
 		printf("---------SENT\n");
 	}
 	else if(rank==1)
 	{
+		MPI_Status status;	
+
 		dataPoint *recvDataset;
-		//readDataDUMMY(&recvDataset, N,D);
-		(*recvDataset).point = (double*) malloc(D*sizeof(double));
-		//printDataPoint(recvDataset[3],D);
+		allocateEmptyDataset(&recvDataset, N,D); // Init dataset array
+		//MPI_Recv( recvDataset, N, MPI_DATAPOINT_INDEX_LABEL, srcRank, 0, MPI_COMM_WORLD, &status);
 
-		MPI_Status status;
-		MPI_Recv( recvDataset, N, MPI_DATAPOINT_A, srcRank, 0, MPI_COMM_WORLD, &status);
+		double** buff = (double**) malloc(N*sizeof(double*));
+	//	MPI_Recv( buff, N, MPI_DATAPOINT_POINT, srcRank, 1, MPI_COMM_WORLD, &status);
+		int i;
+		for(i=0;i<N;i++){
+			//printf("RECEIVED BUFF: %lf\n", buff[i][2]);
+			//recvDataset[i].point = buff[i];
+		}		
 
-		double * test = (double*) malloc(D*sizeof(double));
-		MPI_Recv( recvDataset, 1, MPI_DATAPOINT_B, srcRank, 1, MPI_COMM_WORLD, &status);
-		
+
+		//printDataset(recvDataset,N,D);
+		//printArray(buff,N,D);
 		printf("---------RECEIVED\n");
-		printDataset(recvDataset, N, D);
-		//printDataPoint(recvDataset[3],D);
-		
-		printf("label=%d\n", recvDataset[0].label);
-		printf("index=%d\n", recvDataset[0].index);
-		//printf("point=%lf\n", recvDataset[0].point[0]);
-		//printf("point=%lf\n", test[0]);
+
 	}
 	
 
-	MPI_Type_free(&MPI_DATAPOINT_A);
-	MPI_Type_free(&MPI_DATAPOINT_B);
+	//MPI_Type_free(&MPI_DATAPOINT_INDEX_LABEL);
+	//MPI_Type_free(&MPI_DATAPOINT_POINT);
 
+	//printf("SAVVAS\n");
 
 	MPI_Finalize();
-
 	return 	0;
 }
+
