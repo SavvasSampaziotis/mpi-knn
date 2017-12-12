@@ -62,6 +62,7 @@ void readData(const char* filename, dataPoint **dataSet, int* N, int* D )
 				printf("ERROR Reading label in %d row",i);
 		
 		(*dataSet)[i].label = temp;
+		(*dataSet)[i].index = i;
 	}
 
 	fclose( fp );
@@ -77,6 +78,7 @@ void readDataDUMMY(dataPoint **dataSet, int N, int D){
 	
 	for(i=0; i<N; i++)
 	{
+		(*dataSet)[i].index = i;
 		(*dataSet)[i].label = i;
 		(*dataSet)[i].point = (double*) malloc(D*sizeof(double));
 		for(j=0; j<D; j++)
@@ -88,9 +90,10 @@ void readDataDUMMY(dataPoint **dataSet, int N, int D){
 void printDataPoint(dataPoint dp, int D)
 {
 	int i;
+	printf("\t%d: [", dp.index);
 	for (i = 0; i < D; ++i)
 		printf("%lf ",dp.point[i]);	
-	printf("\t%d", dp.label);
+	printf("]\t%d", dp.label);
 	printf("\n");
 }
 
