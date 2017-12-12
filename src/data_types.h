@@ -9,7 +9,6 @@
 #define DATA_TYPES_SAVVAS_H
 
 typedef struct dataPointStruct{
-	int index;
 	int label;
 	double *point;
 } dataPoint;
