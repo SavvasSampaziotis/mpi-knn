@@ -14,9 +14,9 @@
 #include <string.h>
 #include "data_types.h"
 
-double calc_dist(dataPoint A, dataPoint B, int D);
-void distance_matrix(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix);
-void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix);
+double calc_dist(DataPoint A, DataPoint B, int D);
+void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix);
+void distance_matrix_OMP(DataSet *dataSet, nnPoint*** distMatrix);
 int cmpfunc (const void * a, const void * b);
 
 /**
@@ -31,15 +31,19 @@ int cmpfunc (const void * a, const void * b);
 			for each  data-point.
 		double** KNN_dist =[N,K]. Likewise, this matrix contains the calculated distance.
 */
-void knn(dataPoint **dataSet, int N, int D, int K, nnPoint*** KNN ){
-	
+void knn(DataSet *dataSet, int K, nnPoint*** KNN )
+{
+	int N = dataSet->N;
+	int D = dataSet->D;
+	DataPoint* dataPoints = dataSet->dataPoints;
+
+
 	// N-Array of knns' for each element. size(KNN)=[N,K]
 	*KNN = (nnPoint**) malloc(N*sizeof(nnPoint*));
 
 	// Calculate the Distance Matrix. 
 	nnPoint ** distMatrix;
-	distance_matrix_OMP(dataSet, N,D, &distMatrix);
-
+	distance_matrix_OMP( dataSet, &distMatrix);
 
 	int i;
 	for(i=0; i<N; i++)
@@ -70,26 +74,34 @@ void knn(dataPoint **dataSet, int N, int D, int K, nnPoint*** KNN ){
 	distMatrix is symmetric with its diagonal==0. Thus, the calculation is 
 	done efficiently, by performing N(N-1)/2 calc_dist calls instead of N^2.  
 */
-void distance_matrix(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix)
+void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix)
 {		
+	int N = dataSet->N;
+	int D = dataSet->D;
+	DataPoint* dataPoints = dataSet->dataPoints;
+
+	printf("%d\n", N);
+	printDataPoint(dataPoints[4], D);
+
 	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));		
 	int i;
 	for(i=0; i<N; i++)
 		(*distMatrix)[i] = (nnPoint*) malloc(N*sizeof(nnPoint));
+
 	for(i=0; i<N; i++)
 	{
 		(*distMatrix)[i][i].dist = 0;
-		(*distMatrix)[i][i].dpoint = &( (*dataSet)[i] );
+		(*distMatrix)[i][i].dpoint = &( dataPoints[i] );
 
 		int j;
 		for(j=i+1; j<N; j++)
 		{
-			double d = calc_dist((*dataSet)[i],(*dataSet)[j], D);
+			double d = calc_dist( dataPoints[i], dataPoints[j], D);
 			(*distMatrix)[i][j].dist = d;
-			(*distMatrix)[i][j].dpoint = &( (*dataSet)[j] );
+			(*distMatrix)[i][j].dpoint = &( dataPoints[j] );
 			
 			(*distMatrix)[j][i].dist = d;
-			(*distMatrix)[j][i].dpoint = &( (*dataSet)[i] );
+			(*distMatrix)[j][i].dpoint = &( dataPoints[i] );
 		}
 	}
 }
@@ -107,9 +119,13 @@ void distance_matrix(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix)
 	 This is due to the symmetrical-calculation of the matrix. 
 
 */
-void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatrix)
+void distance_matrix_OMP(DataSet *dataSet,  nnPoint*** distMatrix)
 {
 	omp_set_num_threads(4);
+
+	int N = dataSet->N;
+	int D = dataSet->D;
+	DataPoint* dataPoints = dataSet->dataPoints;
 
 	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));	
 	
@@ -125,28 +141,28 @@ void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatri
 		{
 			//This fills up the diagonal
 			(*distMatrix)[i][i].dist = 0;
-			(*distMatrix)[i][i].dpoint = &( (*dataSet)[i] );
+			(*distMatrix)[i][i].dpoint = &( dataPoints[i] );
 
 			(*distMatrix)[N-i-1][N-i-1].dist = 0;
-			(*distMatrix)[N-i-1][N-i-1].dpoint = &( (*dataSet)[N-i-1] );
+			(*distMatrix)[N-i-1][N-i-1].dpoint = &( dataPoints[N-i-1] );
 
 			int j;
 			for(j=i+1; j<N; j++)
 			{
-				double d = calc_dist((*dataSet)[i],(*dataSet)[j], D);
+				double d = calc_dist(dataPoints[i], dataPoints[j], D);
 				(*distMatrix)[i][j].dist = d;
-				(*distMatrix)[i][j].dpoint = &( (*dataSet)[j] );
+				(*distMatrix)[i][j].dpoint = &( dataPoints[j] );
 				
 				(*distMatrix)[j][i].dist = d;
-				(*distMatrix)[j][i].dpoint = &( (*dataSet)[i] );
+				(*distMatrix)[j][i].dpoint = &( dataPoints[i] );
 			}
 			for(j=N-i-1; j<N; j++){
-				double d = calc_dist((*dataSet)[N-i-1],(*dataSet)[j], D);
+				double d = calc_dist(dataPoints[N-i-1], dataPoints[j], D);
 				(*distMatrix)[N-i-1][j].dist = d;
-				(*distMatrix)[N-i-1][j].dpoint = &( (*dataSet)[j] );
+				(*distMatrix)[N-i-1][j].dpoint = &( dataPoints[j] );
 				
 				(*distMatrix)[j][N-i-1].dist = d;
-				(*distMatrix)[j][N-i-1].dpoint = &( (*dataSet)[N-i-1] );
+				(*distMatrix)[j][N-i-1].dpoint = &( dataPoints[N-i-1] );
 			}
 		}
 }
@@ -156,7 +172,7 @@ void distance_matrix_OMP(dataPoint **dataSet, int N, int D, nnPoint*** distMatri
 	Calculates distance between datapoint A and B. 
 	Each of these are double arrays of length D.
 */
-double calc_dist(dataPoint A, dataPoint B, int D){
+double calc_dist(DataPoint A, DataPoint B, int D){
 	
 	int i;
 	double temp, dist = 0;

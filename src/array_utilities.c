@@ -5,27 +5,17 @@
 
 #include "data_types.h"
 
-/*
-void allocateArray(double** A, int N, int D)
-{
-	int i;
-	
-	A = (double **) malloc(N*sizeof(double*));
-	
-	for (i = 0; i<N; i++){
-		//double* temp = (double *) malloc(D*sizeof(double));
-		(A[i]) = (double *) malloc(D*sizeof(double));
-	}	
-}
-*/
+void allocateEmptyDataSet(DataSet* dataSet, int N, int D);
+
 
 /**
 	Reads data from file. 
 
-	Reference COde from Tutorials Point and  http://www.cplusplus.com/reference/
+	Reference Code from Tutorials Point and  http://www.cplusplus.com/reference/
+	 regarding the use of fscan  
 
 */
-void readData(const char* filename, dataPoint **dataSet, int* N, int* D )
+void readData(const char* filename, DataSet *dataSet)
 {
 	// Open File
 	FILE *fp;
@@ -37,32 +27,31 @@ void readData(const char* filename, dataPoint **dataSet, int* N, int* D )
 	}
 
 	// Read File Header and parse dataSet size and dimensionality
+	int N,D;
 	char buff[15];
-	fscanf(fp, "%d\t%d\n", N,D);
-	printf("N=%d \t D=%d \n", *N,*D);
+	fscanf(fp, "%d\t%d\n", &N,&D);
+	printf("N=%d \t D=%d \n", N,D);
 	//*N = 10;	
 	//*D = 3;
-
-	*dataSet = (dataPoint*) malloc((*N)*sizeof(dataPoint));
+	allocateEmptyDataSet(dataSet,N,D);
+	
 	int i,j;	
-	for(i=0; i<(*N); i++)
+	for(i=0; i<N; i++)
 	{
-		(*dataSet)[i].point = (double*) malloc((*D)*sizeof(double));
-		
-		for(j=0; j<(*D); j++)
+		for(j=0; j<D; j++)
 		{
 			double  temp = 3;;
 			if (EOF == fscanf(fp, "%lf\t", &temp))
 				printf("ERROR Reading datapoint in %d row, %d column",i,j);
-			(*dataSet)[i].point[j] = temp;
+			(*dataSet).dataPoints[i].point[j] = temp;
 		}
 
 		int temp = -10;
 		if (EOF == fscanf(fp, "%d\n", &temp))
 				printf("ERROR Reading label in %d row",i);
 		
-		(*dataSet)[i].label = temp;
-		(*dataSet)[i].index = i;
+		(*dataSet).dataPoints[i].label = temp;
+		(*dataSet).dataPoints[i].index = i;
 	}
 
 	fclose( fp );
@@ -71,28 +60,49 @@ void readData(const char* filename, dataPoint **dataSet, int* N, int* D )
 /**
 	Reads data from file...
 */
-void readDataDUMMY(dataPoint **dataSet, int N, int D){
+void readDataDUMMY(DataSet *dataSet, int N, int D){
 	int i,j;
 	
-	*dataSet = (dataPoint*) malloc(N*sizeof(dataPoint));
+	allocateEmptyDataSet(dataSet,N,D);
 	
 	for(i=0; i<N; i++)
 	{
-		(*dataSet)[i].index = i;
-		(*dataSet)[i].label = i;
-		(*dataSet)[i].point = (double*) malloc(D*sizeof(double));
+		(*dataSet).dataPoints[i].index = i;
+		(*dataSet).dataPoints[i].label = i;
+		(*dataSet).dataPoints[i].point = (double*) malloc(D*sizeof(double));
 		for(j=0; j<D; j++)
-			(*dataSet)[i].point[j] = i+j;
+			(*dataSet).dataPoints[i].point[j] = i+j;
 	}
 }
 
 
-void printDataPoint(dataPoint dp, int D)
+void allocateEmptyDataSet(DataSet* dataSet, int N, int D){
+	int i,j;
+	
+	dataSet->data = (double*) malloc(N*D*sizeof(double));
+	dataSet->N = N;
+	dataSet->D = D;
+	dataSet->dataPoints = (DataPoint*) malloc(N*sizeof(DataPoint));
+
+	for(i=0; i<N; i++)
+	{
+		dataSet->dataPoints[i].index = -1;
+		dataSet->dataPoints[i].label = -1;
+
+		// Each dataPoint points to a row of the whole data matrix
+		(*dataSet).dataPoints[i].point = &((*dataSet).data[D*i]);
+		for(j=0; j<D; j++)
+			dataSet->dataPoints[i].point[j] = 0;
+	}
+
+}
+
+void printDataPoint(DataPoint dp, int D)
 {
 	int i;
 	printf("\t%d: [", dp.index);
-	//for (i = 0; i < D; ++i)
-		//printf("%lf ",dp.point[i]);	
+	for (i = 0; i < D; ++i)
+		printf("%lf ",dp.point[i]);	
 	printf("]\t%d", dp.label);
 	printf("\n");
 }
@@ -101,11 +111,11 @@ void printDataPoint(dataPoint dp, int D)
 /**
 	Prints array of NxD elements 
 */
-void printDataset(dataPoint* dataSet, int N, int D)
+void printDataSet(DataSet* dataSet)
 {
 	int i;
-	for (i = 0; i<N; i++){
-		printDataPoint(dataSet[i],D);
+	for (i = 0; i<dataSet->N; i++){
+		printDataPoint(dataSet->dataPoints[i], dataSet->D);
 		printf("\n");
 	}
 }
