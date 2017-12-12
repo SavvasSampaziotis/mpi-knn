@@ -91,8 +91,8 @@ void printDataPoint(dataPoint dp, int D)
 {
 	int i;
 	printf("\t%d: [", dp.index);
-	for (i = 0; i < D; ++i)
-		printf("%lf ",dp.point[i]);	
+	//for (i = 0; i < D; ++i)
+		//printf("%lf ",dp.point[i]);	
 	printf("]\t%d", dp.label);
 	printf("\n");
 }
