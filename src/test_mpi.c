@@ -20,7 +20,7 @@ int main(int argc, char** argv){
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
 	/* Generate Dummy Data*/
-	int N=10, D=1;
+	int N=10, D=2;
 
 	dataPoint *dataSet;
 	readDataDUMMY(&dataSet, N,D);
@@ -56,7 +56,7 @@ int main(int argc, char** argv){
 	printf("off %d\n", offsets[2]);
 	// Create New Data type
 	MPI_Datatype MPI_DATAPOINT;
-	MPI_Type_create_struct( 3, block_lengths, offsets, array_of_types, &MPI_DATAPOINT);
+	MPI_Type_struct( 3, block_lengths, offsets, array_of_types, &MPI_DATAPOINT);
 
 	MPI_Type_commit(&MPI_DATAPOINT);
 	
