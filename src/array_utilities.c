@@ -88,9 +88,10 @@ void readDataDUMMY(dataPoint **dataSet, int N, int D){
 void printDataPoint(dataPoint dp, int D)
 {
 	int i;
+	printf("%d\t: [", dp.index);
 	for (i = 0; i < D; ++i)
 		printf("%lf ",dp.point[i]);	
-	printf("\t%d", dp.label);
+	printf("]\t%d", dp.label);
 	printf("\n");
 }
 
