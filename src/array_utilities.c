@@ -5,7 +5,7 @@
 
 #include "data_types.h"
 
-void allocateEmptyDataSet(DataSet* dataSet, int N, int D);
+void allocate_empty_dataset(DataSet* dataSet, int N, int D);
 
 
 /**
@@ -15,7 +15,7 @@ void allocateEmptyDataSet(DataSet* dataSet, int N, int D);
 	 regarding the use of fscan  
 
 */
-void readData(const char* filename, DataSet *dataSet)
+void read_data(const char* filename, DataSet *dataSet)
 {
 	// Open File
 	FILE *fp;
@@ -33,7 +33,7 @@ void readData(const char* filename, DataSet *dataSet)
 	printf("N=%d \t D=%d \n", N,D);
 	//*N = 10;	
 	//*D = 3;
-	allocateEmptyDataSet(dataSet,N,D);
+	allocate_empty_dataset(dataSet,N,D);
 	
 	int i,j;	
 	for(i=0; i<N; i++)
@@ -60,10 +60,10 @@ void readData(const char* filename, DataSet *dataSet)
 /**
 	Reads data from file...
 */
-void readDataDUMMY(DataSet *dataSet, int N, int D){
+void read_data_DUMMY(DataSet *dataSet, int N, int D){
 	int i,j;
 	
-	allocateEmptyDataSet(dataSet,N,D);
+	allocate_empty_dataset(dataSet,N,D);
 	
 	for(i=0; i<N; i++)
 	{
@@ -75,7 +75,7 @@ void readDataDUMMY(DataSet *dataSet, int N, int D){
 }
 
 
-void allocateEmptyDataSet(DataSet* dataSet, int N, int D){
+void allocate_empty_dataset(DataSet* dataSet, int N, int D){
 	int i,j;
 	
 	dataSet->data = (double*) malloc(N*D*sizeof(double));
@@ -94,13 +94,13 @@ void allocateEmptyDataSet(DataSet* dataSet, int N, int D){
 		// Each dataPoint points to a row of the whole data matrix
 		dataSet->dataPoints[i] = &(dataSet->data[D*i]);
 		for(j=0; j<D; j++)
-			dataSet->dataPoints[i][j] = 11112;
+			dataSet->dataPoints[i][j] = 11112; // For debbuging purposes.
 	}
 
 }
 
 
-void deAllocateDataSet(DataSet* dataSet)
+void deallocate_dataset(DataSet* dataSet)
 {	
 	int i;
 
@@ -125,7 +125,7 @@ void printDataPoint(DataPoint dp, int D)
 /**
 	Prints array of NxD elements 
 */
-void printDataSet(DataSet* dataSet)
+void print_dataset(DataSet* dataSet)
 {
 	int i,j;
 	for (i = 0; i<dataSet->N; i++)
@@ -141,7 +141,7 @@ void printDataSet(DataSet* dataSet)
 
 
 
-void printArray(double** A, int N, int M)
+void print_array(double** A, int N, int M)
 {
 	int i,j;
 	for (i = 0; i<N; i++){
