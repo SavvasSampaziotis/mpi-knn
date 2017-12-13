@@ -8,6 +8,11 @@
 #ifndef DATA_TYPES_SAVVAS_H
 #define DATA_TYPES_SAVVAS_H
 
+
+#define DATA_TAG 0
+#define LABEL_TAG 1	
+#define INDEX_TAG 2
+
 typedef struct DataSetStruct
 {	
 	int N;

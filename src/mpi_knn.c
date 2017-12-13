@@ -6,8 +6,14 @@
 
 #include "data_types.h"
 
+void distribute_data(DataSet* dataSet, int size);
+void send_dataset(DataSet *dataSet,int dest, int start, int subN, int D);
+void receive_dataset(DataSet *dataSet);
+
 
 struct timeval startwtime, endwtime;
+
+
 
 int main(int argc, char** argv){
 
@@ -17,80 +23,94 @@ int main(int argc, char** argv){
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
-
 	if(rank==0)
 	{
 		/* Read all Data and Distribute among the rest of the processes*/
 		DataSet dataSet;
-		readData("./data/formatted_data/mnist_train.txt", &dataSet);
-		distributeData(&dataSet, receivedDataSet);	
+		//read_data("./data/formatted_data/mnist_train.txt", &dataSet);
+		read_data_DUMMY(&dataSet, 10, 3);
+		print_dataset(&dataSet);	
+		//printf("RANK: %d\tSending Dataset...\n", rank);
+		distribute_data(&dataSet, size);
+		//
+
+	}else{
+		DataSet recvDataSet;
+		
+		receive_dataset(&recvDataSet);
+
+		printf("RANK: %d\tRecieving Dataset...\n", rank);
+		print_dataset(&recvDataSet);
 	}
 		
-	printf("---------TYPE CREATED\n");
-	
-	
-
-	MPI_Type_commit(&MPI_DATAPOINT);
-	
-	if(rank==0)
-	{	
-
-		MPI_Send( dataSet.data, N*D, MPI_DOUBLE, destRank, 0, MPI_COMM_WORLD);
-
-		MPI_Send( dataSet.dataPoints, N, MPI_DATAPOINT, destRank, 0, MPI_COMM_WORLD);
-
-		printDataSet( &dataSet );
-		printf("---------SENT\n");
-
-	}
-	else if(rank==1)
-	{
-		MPI_Status status;	
-
-		DataSet recvDataset;
-		allocateEmptyDataSet( &recvDataset, N,D); // Init dataset array
-		
-		MPI_Recv( recvDataset.data, N*D, MPI_DOUBLE, srcRank, 0, MPI_COMM_WORLD, &status);
-
-		MPI_Recv( recvDataset.dataPoints, N, MPI_DATAPOINT, srcRank, 0, MPI_COMM_WORLD, &status);
-
-		printDataSet( &recvDataset);
-		
-
-		printf("---------RECEIVED\n");
-
-	}
-	
-
-	
-	MPI_Type_free(&MPI_DATAPOINT);
-
 	MPI_Finalize();
 	return 	0;
 }
 
 
-void distributeData(DataSet* dataSet, DataSet* receivedDataSet)
+void distribute_data(DataSet* dataSet, int size)
 {
-	for(i=0;i<)
+	int subN = dataSet->N/size;
+	int mod = dataSet->N % size;
+	int D = dataSet->D;
+
+	int dest;
+	for(dest=1; dest<(size-1); dest++)
+	{
+		int start = dest*subN;
+		send_dataset(dataSet, dest, start, subN, D);
+	}
+
+	//Send last DataSet, of length [N/size + mod(N,size)]
+	send_dataset(dataSet, size-1, (size-1)*subN, subN+mod, D);
 }
 
 
-void createMPI_DATAPOINT(MPI_Datatype *MPI_DATAPOINT){
-	
-	MPI_Datatype tempType;
-	DataSet	tempDataSet;
+void send_dataset(DataSet *dataSet, int dest, int start, int subN, int D)
+{
+	//Send size first, so that we can preallocate accordingly.
+	MPI_Send( &subN, 1, MPI_INT, dest, 0, MPI_COMM_WORLD );
+	MPI_Send( &D, 		1, MPI_INT, dest, 1, MPI_COMM_WORLD );
 
-	// THe dimensionality of the dataset does not affect the struct-dataPoint length. 
-	allocateEmptyDataSet(&tempDataSet, 2, 1); 
+	MPI_Request request[3];
+	
+	MPI_Isend( &(dataSet->data[start*D]), D*subN, MPI_DOUBLE, dest, DATA_TAG,  \
+		MPI_COMM_WORLD, &request[0]);
+	MPI_Isend( &(dataSet->label[start]),  subN,   MPI_INT,    dest, LABEL_TAG, \
+		MPI_COMM_WORLD,  &request[1]);	
+	MPI_Isend( &(dataSet->index[start]),  subN,   MPI_INT,    dest, INDEX_TAG, \
+		MPI_COMM_WORLD,  &request[2]);
+}
 
-	// 
-	MPI_Type_contiguous(2, MPI_INT, &tempType);
-	
-	MPI_Aint ub = (MPI_Aint) &(dataSet.dataPoints[1]) - (MPI_Aint) &(dataSet.dataPoints[0]);
-	
-	MPI_Type_create_resized(tempType, 0, ub, MPI_DATAPOINT);
 
+/**
+	ref: http://mpitutorial.com/tutorials/dynamic-receiving-with-mpi-probe-and-mpi-status/
+*/
+void receive_dataset(DataSet *dataSet){
+	MPI_Status status;
+	MPI_Request request[3];
+	int N, D, ND=0;
 	
-	deAllocateDataSet(&tempDataSet);
+	//MPI_Bcast(&D, 1, MPI_INT, 0, MPI_COMM_WORLD );
+	MPI_Recv(&N, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+	MPI_Recv(&D, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
+	ND = N*D;
+
+	printf("Input DataSet : %d x %d = %d \n",N,D,ND);
+
+	/*Allocate Appropriately*/
+	allocate_empty_dataset(dataSet,N,D);
+
+	/*Receive like cray-cray */
+	MPI_Irecv(dataSet->data, 15, MPI_DOUBLE, 0, DATA_TAG,  MPI_COMM_WORLD, &request[0]);
+	MPI_Irecv(dataSet->label, N, MPI_INT, 	0, LABEL_TAG, MPI_COMM_WORLD, &request[1]);
+	MPI_Irecv(dataSet->index, N, MPI_INT, 	0, INDEX_TAG, MPI_COMM_WORLD, &request[2]);
+	
+	int r;
+	for(r=0; r<3; r++)
+	{
+		//printf("Message %d has been received\n",r);
+		MPI_Wait(&request[r], NULL);
+	}
+	//printf("Complete Dataset has been received\n");
 }
