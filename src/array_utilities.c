@@ -96,6 +96,18 @@ void allocateEmptyDataSet(DataSet* dataSet, int N, int D){
 
 }
 
+
+void deAllocateDataSet(DataSet* dataSet)
+{	
+	int i;
+
+	// All Datapoint structs is now freed
+	free(dataSet->dataPoints);
+	
+	// All data are now freed. Data has size [1,N*D], so one 'free()' will suffice.
+	free(dataSet->data);
+}
+
 void printDataPoint(DataPoint dp, int D)
 {
 	int i;
@@ -130,4 +142,3 @@ void printArray(double** A, int N, int M)
 		printf("\n");
 	}
 }
-
