@@ -110,17 +110,30 @@ void deallocate_dataset(DataSet* dataSet)
 	// All data are now freed. Data has size [1,N*D], so one 'free()' will suffice.
 	free(dataSet->data);
 }
-/*
-void printDataPoint(DataPoint dp, int D)
-{
-	int i;
-	printf("\t%d: [", dp.index);
-	for (i = 0; i < D; ++i)
-		printf("%lf ",dp.point[i]);	
-	printf("]\t%d", dp.label);
-	printf("\n");
-}
+
+/**
+	Resizes the dataSet's allocated memory. 
+
+	int start = i-th datapoint that will be the first entry to the new data set.  
 */
+void reallocate_dataset(DataSet* dataSet, int newN)
+{
+	int D = dataSet->D;
+	dataSet->N = newN;
+
+	dataSet->data = (double*) realloc(dataSet->data, newN*D*sizeof(double));
+
+	dataSet->dataPoints = (double**) realloc( dataSet->dataPoints, newN*sizeof(double*) );
+	dataSet->index = (int*) realloc(dataSet->index, newN*sizeof(int));
+	dataSet->label = (int*) realloc(dataSet->label, newN*sizeof(int));
+
+	// re init the pointer of each datapoint, in case realloc() 
+	// moved the content to another memory location
+	int i;
+	for(i=0; i<newN; i++)
+		dataSet->dataPoints[i] = &(dataSet->data[D*i]);
+}
+
 
 /**
 	Prints array of NxD elements 
@@ -138,7 +151,6 @@ void print_dataset(DataSet* dataSet)
 		printf("]\t%d\n", dataSet->label[i]);
 	}
 }
-
 
 
 void print_array(double** A, int N, int M)

@@ -9,22 +9,22 @@
 #define DATA_TYPES_SAVVAS_H
 
 
-#define DATA_TAG 0
-#define LABEL_TAG 1	
-#define INDEX_TAG 2
+#define DATA_TAG 3
+#define LABEL_TAG 4	
+#define INDEX_TAG 5
 
+/* 
+As opsetai to Stack Overflow: 
+https://stackoverflow.com/questions/5901476/sending-and-receiving-2d-array-over-mpi
+*/
 typedef struct DataSetStruct
 {	
 	int N;
 	int D;
-	
-	double* data; // Continous array all the data 
-	
-	double** dataPoints;
-
+	double* data; // Continous array all the data. Perfect for MPI
+	double** dataPoints; //Array of pointers pointing on segments of data.
 	int* label;
 	int* index;
-
 } DataSet;
 
 
