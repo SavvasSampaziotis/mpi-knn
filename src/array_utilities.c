@@ -91,7 +91,7 @@ void allocateEmptyDataSet(DataSet* dataSet, int N, int D){
 		// Each dataPoint points to a row of the whole data matrix
 		(*dataSet).dataPoints[i].point = &((*dataSet).data[D*i]);
 		for(j=0; j<D; j++)
-			dataSet->dataPoints[i].point[j] = 0;
+			dataSet->dataPoints[i].point[j] = 11112;
 	}
 
 }
