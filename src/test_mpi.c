@@ -21,7 +21,8 @@ int main(int argc, char** argv){
 	
 	/* Generate Dummy Data*/
 	int N=10, D=4;
-
+	DataSet dataSet;
+	readDataDUMMY( &dataSet, N,D);
 
 	/* Set up some configuration utilities*/
 	int destRank = rank + 1;
@@ -34,22 +35,24 @@ int main(int argc, char** argv){
 	
 	printf("---------TYPE CREATED\n");
 	
+	MPI_Datatype MPI_DATAPOINT, tempType;
 
+	MPI_Type_contiguous(2, MPI_INT, &tempType);
+	MPI_Aint ub = (MPI_Aint) &(dataSet.dataPoints[1]) - (MPI_Aint) &(dataSet.dataPoints[0]);
+	MPI_Type_create_resized(tempType, 0, ub, &MPI_DATAPOINT);
+
+	MPI_Type_commit(&MPI_DATAPOINT);
+	
 	if(rank==0)
 	{	
 
-		DataSet dataSet;
-		readDataDUMMY( &dataSet, N,D);
-		
 		MPI_Send( dataSet.data, N*D, MPI_DOUBLE, destRank, 0, MPI_COMM_WORLD);
 
+		MPI_Send( dataSet.dataPoints, N, MPI_DATAPOINT, destRank, 0, MPI_COMM_WORLD);
+
 		printDataSet( &dataSet );
-		/*
-		int i;
-		for (i = 0; i<N*D; i++)
-			printf("%lf\n", dataSet.data[i]);
-		*/
 		printf("---------SENT\n");
+
 	}
 	else if(rank==1)
 	{
@@ -60,9 +63,7 @@ int main(int argc, char** argv){
 		
 		MPI_Recv( recvDataset.data, N*D, MPI_DOUBLE, srcRank, 0, MPI_COMM_WORLD, &status);
 
-		int i;
-		for (i = 0; i<N*D; i++)
-			printf("%lf\n", recvDataset.data[i]);
+		MPI_Recv( recvDataset.dataPoints, N, MPI_DATAPOINT, srcRank, 0, MPI_COMM_WORLD, &status);
 
 		printDataSet( &recvDataset);
 		
@@ -72,8 +73,8 @@ int main(int argc, char** argv){
 	}
 	
 
-	//MPI_Type_free(&MPI_DATAPOINT_INDEX_LABEL);
-	//MPI_Type_free(&MPI_DATAPOINT_POINT);
+	
+	MPI_Type_free(&MPI_DATAPOINT);
 
 	//printf("SAVVAS\n");
 
