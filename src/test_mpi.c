@@ -46,9 +46,9 @@ int main(int argc, char** argv){
 	if(rank==0)
 	{	
 
-		MPI_Send( dataSet.data, N*D, MPI_DOUBLE, destRank, 0, MPI_COMM_WORLD);
-
-		MPI_Send( dataSet.dataPoints, N, MPI_DATAPOINT, destRank, 0, MPI_COMM_WORLD);
+		MPI_Send( dataSet.data, (N-2)*D, MPI_DOUBLE, destRank, 0, MPI_COMM_WORLD);
+		MPI_Send( dataSet.label, N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
+		MPI_Send( dataSet.index, N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
 
 		printDataSet( &dataSet );
 		printf("---------SENT\n");
@@ -59,11 +59,12 @@ int main(int argc, char** argv){
 		MPI_Status status;	
 
 		DataSet recvDataset;
-		allocateEmptyDataSet( &recvDataset, N,D); // Init dataset array
+		allocateEmptyDataSet( &recvDataset, N-2,D); // Init dataset array
 		
-		MPI_Recv( recvDataset.data, N*D, MPI_DOUBLE, srcRank, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv( recvDataset.data, (N-2)*D, MPI_DOUBLE, srcRank, 0, MPI_COMM_WORLD, &status);
 
-		MPI_Recv( recvDataset.dataPoints, N, MPI_DATAPOINT, srcRank, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv( recvDataset.label, N-2, MPI_INT, srcRank, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv( recvDataset.index, N-2, MPI_INT, srcRank, 0, MPI_COMM_WORLD, &status);
 
 		printDataSet( &recvDataset);
 		

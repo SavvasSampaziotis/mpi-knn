@@ -8,24 +8,26 @@
 #ifndef DATA_TYPES_SAVVAS_H
 #define DATA_TYPES_SAVVAS_H
 
-typedef struct DataPointStruct{
-	int index;
-	int label;
-	double *point; //Pointer pointing on a Dataset.data segment.    
-} DataPoint;
-
 typedef struct DataSetStruct
 {	
 	int N;
 	int D;
+	
 	double* data; // Continous array all the data 
-	DataPoint* dataPoints;
+	
+	double** dataPoints;
+
+	int* label;
+	int* index;
+
 } DataSet;
 
 
 
-typedef struct neighbourPointStruct{
-	DataPoint* dpoint; //A dataPoint and its distance from another datapoint
+typedef struct neighbourPointStruct
+{
+	//DataPoint* dpoint; //A dataPoint and its distance from another datapoint
+	int index;
 	double dist;
 } nnPoint;
 

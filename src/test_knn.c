@@ -18,42 +18,32 @@ DataSet dataSet;
 int main(int argc, char** argv){
 	int i;
 
-	N = 10;
-	D = 3;
-	
+
 	//readData("./data/formatted_data/mnist_train_svd.txt", dataSet, &N, &D);
 	//readData("./data/formatted_data/mnist_train.txt", &dataSet);
-	//readData("./data/formatted_data/testData.txt", &dataSet);
-	
-	readDataDUMMY(&dataSet, N,D);
+	readDataDUMMY(&dataSet, 10,4);
+
+
 	printDataSet(&dataSet);
-	for (i = 0; i<N*D; i++)
-		printf("%lf\n", dataSet.data[i]);
+//	for (i = 0; i<dataSet.N*dataSet.D; i++)
+//		printf("%lf\n", dataSet.data[i]);	
 	
-	/*
 	int K = 3;
 	nnPoint** KNN;
-	knn(&dataSet,  N,D,K, &KNN);
+	knn(&dataSet, K, &KNN);
 
-	for (i = 0; i<N; i++){
+	for (i = 0; i<dataSet.N; i++){
 		printf("\n");
 		int k;
 
 		for(k=0; k<K; k++)
-			printf("%d ", (KNN[i][k].dpoint->label));
+		{
+			printf("[%d %lf]\t", KNN[i][k].index, KNN[i][k].dist);
+		}
 
-		for(k=0; k<K; k++)
-			printf("%d ", (KNN[i][k].dist));
-
-		/*
-		printDataPoint(*(KNN[i][0].dpoint), D);
-		printDataPoint(*(KNN[i][1].dpoint), D);
-		printDataPoint(*(KNN[i][2].dpoint), D);
-		*/
-		/*
-	}
 		printf("\n");
-	*/
+	}
+	
 	test_distance_matrix();
 
 	return 0;
@@ -81,16 +71,16 @@ void test_distance_matrix(){
 	
 
 	printf("\n*** Distance Matrix OMP ***\n");
-	for(i=0; i<N; i++){
+	for(i=0; i<dataSet.N; i++){
 		int j;
 		printf("\n");
-		for(j=0; j<N; j++)
+		for(j=0; j<dataSet.N; j++)
 			printf("%lf ", distMatrix[i][j].dist);
 	}
 	
 
 	
-	for(i=0; i<N; i++)
+	for(i=0; i<dataSet.N; i++)
 		free(distMatrix[i]);
 	free(distMatrix);
 
@@ -104,14 +94,14 @@ void test_distance_matrix(){
 	printf("\n Serial Time: %f\n", seq_time);
 
 	printf("\n*** Distance Matrix SERIAL ***\n");
-	for(i=0; i<N; i++){
+	for(i=0; i<dataSet.N; i++){
 		int j;
 		printf("\n");
-		for(j=0; j<N; j++)
+		for(j=0; j<dataSet.N; j++)
 			printf("%lf ", distMatrix[i][j].dist);
 	}
 		
-	for(i=0; i<N; i++)
+	for(i=0; i<dataSet.N; i++)
 		free(distMatrix[i]);
 	free(distMatrix);
 

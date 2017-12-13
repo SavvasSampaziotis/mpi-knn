@@ -43,15 +43,15 @@ void readData(const char* filename, DataSet *dataSet)
 			double  temp = 3;;
 			if (EOF == fscanf(fp, "%lf\t", &temp))
 				printf("ERROR Reading datapoint in %d row, %d column",i,j);
-			(*dataSet).dataPoints[i].point[j] = temp;
+			dataSet->dataPoints[i][j] = temp;
 		}
 
 		int temp = -10;
 		if (EOF == fscanf(fp, "%d\n", &temp))
 				printf("ERROR Reading label in %d row",i);
 		
-		(*dataSet).dataPoints[i].label = temp;
-		(*dataSet).dataPoints[i].index = i;
+		dataSet->label[i] = temp;
+		dataSet->index[i] = i;
 	}
 
 	fclose( fp );
@@ -67,10 +67,10 @@ void readDataDUMMY(DataSet *dataSet, int N, int D){
 	
 	for(i=0; i<N; i++)
 	{
-		(*dataSet).dataPoints[i].index = i;
-		(*dataSet).dataPoints[i].label = i;
+		dataSet->index[i] = i;
+		dataSet->label[i] = i;
 		for(j=0; j<D; j++)
-			(*dataSet).dataPoints[i].point[j] = i+j;
+			dataSet->dataPoints[i][j] = i+j;
 	}
 }
 
@@ -81,17 +81,20 @@ void allocateEmptyDataSet(DataSet* dataSet, int N, int D){
 	dataSet->data = (double*) malloc(N*D*sizeof(double));
 	dataSet->N = N;
 	dataSet->D = D;
-	dataSet->dataPoints = (DataPoint*) malloc(N*sizeof(DataPoint));
+	dataSet->dataPoints = (double**) malloc(N*sizeof(double*));
+
+	dataSet->index = (int*) malloc(N*sizeof(int));
+	dataSet->label = (int*) malloc(N*sizeof(int));
 
 	for(i=0; i<N; i++)
 	{
-		dataSet->dataPoints[i].index = -1;
-		dataSet->dataPoints[i].label = -1;
+		dataSet->index[i] = -1;
+		dataSet->label[i] = -1;
 
 		// Each dataPoint points to a row of the whole data matrix
-		(*dataSet).dataPoints[i].point = &((*dataSet).data[D*i]);
+		dataSet->dataPoints[i] = &(dataSet->data[D*i]);
 		for(j=0; j<D; j++)
-			dataSet->dataPoints[i].point[j] = 11112;
+			dataSet->dataPoints[i][j] = 11112;
 	}
 
 }
@@ -107,7 +110,7 @@ void deAllocateDataSet(DataSet* dataSet)
 	// All data are now freed. Data has size [1,N*D], so one 'free()' will suffice.
 	free(dataSet->data);
 }
-
+/*
 void printDataPoint(DataPoint dp, int D)
 {
 	int i;
@@ -117,17 +120,22 @@ void printDataPoint(DataPoint dp, int D)
 	printf("]\t%d", dp.label);
 	printf("\n");
 }
-
+*/
 
 /**
 	Prints array of NxD elements 
 */
 void printDataSet(DataSet* dataSet)
 {
-	int i;
-	for (i = 0; i<dataSet->N; i++){
-		printDataPoint(dataSet->dataPoints[i], dataSet->D);
-		printf("\n");
+	int i,j;
+	for (i = 0; i<dataSet->N; i++)
+	{
+		printf("\t%d: [", dataSet->index[i]);
+		for (j = 0; j < dataSet->D; j++)
+		{
+			printf("%lf ",dataSet->dataPoints[i][j]);	
+		}
+		printf("]\t%d\n", dataSet->label[i]);
 	}
 }
 

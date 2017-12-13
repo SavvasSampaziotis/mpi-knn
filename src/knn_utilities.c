@@ -14,7 +14,7 @@
 #include <string.h>
 #include "data_types.h"
 
-double calc_dist(DataPoint A, DataPoint B, int D);
+double calc_dist(double* A, double* B, int D);
 void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix);
 void distance_matrix_OMP(DataSet *dataSet, nnPoint*** distMatrix);
 int cmpfunc (const void * a, const void * b);
@@ -35,9 +35,7 @@ void knn(DataSet *dataSet, int K, nnPoint*** KNN )
 {
 	int N = dataSet->N;
 	int D = dataSet->D;
-	DataPoint* dataPoints = dataSet->dataPoints;
-
-
+	
 	// N-Array of knns' for each element. size(KNN)=[N,K]
 	*KNN = (nnPoint**) malloc(N*sizeof(nnPoint*));
 
@@ -56,7 +54,7 @@ void knn(DataSet *dataSet, int K, nnPoint*** KNN )
 			 int j;
 			 for(j=0; j<K; j++){ // Disregard first element
 			 	(*KNN)[i][j].dist = distMatrix[i][j+1].dist;
-			 	(*KNN)[i][j].dpoint = distMatrix[i][j+1].dpoint;
+			 	(*KNN)[i][j].index = distMatrix[i][j+1].index;
 			 }
 			 	
 		}
@@ -78,11 +76,7 @@ void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix)
 {		
 	int N = dataSet->N;
 	int D = dataSet->D;
-	DataPoint* dataPoints = dataSet->dataPoints;
-
-	printf("%d\n", N);
-	printDataPoint(dataPoints[4], D);
-
+	
 	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));		
 	int i;
 	for(i=0; i<N; i++)
@@ -91,17 +85,17 @@ void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix)
 	for(i=0; i<N; i++)
 	{
 		(*distMatrix)[i][i].dist = 0;
-		(*distMatrix)[i][i].dpoint = &( dataPoints[i] );
+		(*distMatrix)[i][i].index = dataSet->index[i];
 
 		int j;
 		for(j=i+1; j<N; j++)
 		{
-			double d = calc_dist( dataPoints[i], dataPoints[j], D);
+			double d = calc_dist( dataSet->dataPoints[i], dataSet->dataPoints[j], D);
 			(*distMatrix)[i][j].dist = d;
-			(*distMatrix)[i][j].dpoint = &( dataPoints[j] );
+			(*distMatrix)[i][j].index =  dataSet->index[j];
 			
 			(*distMatrix)[j][i].dist = d;
-			(*distMatrix)[j][i].dpoint = &( dataPoints[i] );
+			(*distMatrix)[j][i].index =  dataSet->index[i];
 		}
 	}
 }
@@ -125,7 +119,7 @@ void distance_matrix_OMP(DataSet *dataSet,  nnPoint*** distMatrix)
 
 	int N = dataSet->N;
 	int D = dataSet->D;
-	DataPoint* dataPoints = dataSet->dataPoints;
+	//DataPoint* dataPoints = dataSet->dataPoints;
 
 	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));	
 	
@@ -141,28 +135,28 @@ void distance_matrix_OMP(DataSet *dataSet,  nnPoint*** distMatrix)
 		{
 			//This fills up the diagonal
 			(*distMatrix)[i][i].dist = 0;
-			(*distMatrix)[i][i].dpoint = &( dataPoints[i] );
+			(*distMatrix)[i][i].index = dataSet->index[i];
 
 			(*distMatrix)[N-i-1][N-i-1].dist = 0;
-			(*distMatrix)[N-i-1][N-i-1].dpoint = &( dataPoints[N-i-1] );
+			(*distMatrix)[N-i-1][N-i-1].index = dataSet->index[N-i-1];
 
 			int j;
 			for(j=i+1; j<N; j++)
 			{
-				double d = calc_dist(dataPoints[i], dataPoints[j], D);
+				double d = calc_dist(dataSet->dataPoints[i], dataSet->dataPoints[j], D);
 				(*distMatrix)[i][j].dist = d;
-				(*distMatrix)[i][j].dpoint = &( dataPoints[j] );
+				(*distMatrix)[i][j].index = dataSet->index[j];
 				
 				(*distMatrix)[j][i].dist = d;
-				(*distMatrix)[j][i].dpoint = &( dataPoints[i] );
+				(*distMatrix)[j][i].index = dataSet->index[i];
 			}
 			for(j=N-i-1; j<N; j++){
-				double d = calc_dist(dataPoints[N-i-1], dataPoints[j], D);
+				double d = calc_dist(dataSet->dataPoints[N-i-1], dataSet->dataPoints[j], D);
 				(*distMatrix)[N-i-1][j].dist = d;
-				(*distMatrix)[N-i-1][j].dpoint = &( dataPoints[j] );
+				(*distMatrix)[N-i-1][j].index = dataSet->index[j];
 				
 				(*distMatrix)[j][N-i-1].dist = d;
-				(*distMatrix)[j][N-i-1].dpoint = &( dataPoints[N-i-1] );
+				(*distMatrix)[j][N-i-1].index = dataSet->index[N-i-1];
 			}
 		}
 }
@@ -172,12 +166,12 @@ void distance_matrix_OMP(DataSet *dataSet,  nnPoint*** distMatrix)
 	Calculates distance between datapoint A and B. 
 	Each of these are double arrays of length D.
 */
-double calc_dist(DataPoint A, DataPoint B, int D){
+double calc_dist(double* A, double* B, int D){
 	
 	int i;
 	double temp, dist = 0;
 	for(i=0; i<D; i++){
-		temp = A.point[i]-B.point[i]; 
+		temp = A[i]-B[i]; 
 		dist += temp*temp;
 	}
 	//printf("Dist = %f\n", dist);
