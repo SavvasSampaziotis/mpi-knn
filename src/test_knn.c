@@ -26,8 +26,9 @@ int main(int argc, char** argv){
 	//readData("./data/formatted_data/testData.txt", &dataSet);
 	
 	readDataDUMMY(&dataSet, N,D);
-	//printDataSet(&dataSet);
-
+	printDataSet(&dataSet);
+	for (i = 0; i<N*D; i++)
+		printf("%lf\n", dataSet.data[i]);
 	
 	/*
 	int K = 3;
@@ -88,10 +89,10 @@ void test_distance_matrix(){
 	}
 	
 
+	
 	for(i=0; i<N; i++)
 		free(distMatrix[i]);
 	free(distMatrix);
-
 
 	gettimeofday (&startwtime, NULL);
 	{

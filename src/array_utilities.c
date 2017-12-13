@@ -69,7 +69,6 @@ void readDataDUMMY(DataSet *dataSet, int N, int D){
 	{
 		(*dataSet).dataPoints[i].index = i;
 		(*dataSet).dataPoints[i].label = i;
-		(*dataSet).dataPoints[i].point = (double*) malloc(D*sizeof(double));
 		for(j=0; j<D; j++)
 			(*dataSet).dataPoints[i].point[j] = i+j;
 	}
