@@ -8,6 +8,7 @@
 
 
 struct timeval startwtime, endwtime;
+double  seq_time;
 
 int main(int argc, char** argv){
 
@@ -21,11 +22,13 @@ int main(int argc, char** argv){
 	DataSet dataSet;
 	MPI_Request requests[3];
 	
+	
+	
 	if(rank==0)
 	{
 		/* Read all Data and Distribute among the rest of the processes*/
 		//read_data("./data/formatted_data/mnist_train.txt", &dataSet);
-		read_data_DUMMY(&dataSet, 20, 3);
+		read_data_DUMMY(&dataSet, 30, 4);
 		N = dataSet.N;
 		D = dataSet.D;
 	}
@@ -33,17 +36,23 @@ int main(int argc, char** argv){
 
 	MPI_Bcast( &N, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast( &D, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	
 
+	P = N/size;
+
+	gettimeofday (&startwtime, NULL);
 	if(rank==0)
 	{	//WARNING: This will NOT be blocked. 
 		distribute_data(&dataSet, size);
-		printf("DONE\n");
+		//Idistribute_data(&dataSet, size);
 	}
 	else
 	{	
-		receive_dataset(&dataSet, 0);
-		printf("RANK %d\n", rank);
+		MPI_Request *request;
+		Ireceive_dataset(&dataSet, 0, &request);
+		wait_for_request(&request, 3);
+		free(request);
+
+		//receive_dataset(&dataSet, 0);
 	}
 	
 	/*
@@ -53,18 +62,20 @@ int main(int argc, char** argv){
 	*/ 
 	MPI_Barrier(MPI_COMM_WORLD);
 	
+	gettimeofday (&endwtime, NULL);
+ 	seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
+		      + endwtime.tv_sec - startwtime.tv_sec);
+	printf("[RANK %d]: Data Distribution Time: %f\n",rank, seq_time);
 	
 	if(rank==0)
 		reallocate_dataset(&dataSet, (dataSet.N)/size);
-//
+
 	print_dataset(&dataSet);
 	
 
-
-
-
 	//Begin KNN-ing
-	/*
+	int p;
+	for()
 	// Communicate nex datasets in RANK-Tpology
 	DataSet nextDataSet;
 	if(rank == 0)
@@ -82,7 +93,7 @@ int main(int argc, char** argv){
 		receive_dataset(&nextDataSet, rank-1);
 		send_dataset( &dataSet,  rank+1);
 	}
-	*/
+	
 
 		
 	MPI_Finalize();

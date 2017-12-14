@@ -24,13 +24,56 @@ void distribute_data(DataSet* dataSet, int size)
 	for(dest=1; dest<(size-1); dest++)
 	{
 		int start = dest*subN;
+		MPI_Request *request;
 		send_subdataset(dataSet, dest, start, subN);
+		/*
+		Isend_subdataset(dataSet, dest, start, subN, &request);
+		MPI_Request_free(&request[0]);
+		MPI_Request_free(&request[1]);
+		MPI_Request_free(&request[2]);
+		free(request);*/
 	}
 	
 	//Send last DataSet, of length [N/size + mod(N,size)]
+	MPI_Request *request;
+	
 	send_subdataset(dataSet, size-1, (size-1)*subN, subN+mod);
+	
+	/*
+	Isend_subdataset(dataSet, size-1, (size-1)*subN, subN+mod, &request);
+	MPI_Request_free(&request[0]);
+	MPI_Request_free(&request[1]);
+	MPI_Request_free(&request[2]);
+	free(request);
+	*/
 }
 
+void Idistribute_data(DataSet* dataSet, int size)
+{
+	int subN = dataSet->N/size;
+	int mod = dataSet->N % size;
+	int dest;
+	
+	for(dest=1; dest<(size-1); dest++)
+	{
+		int start = dest*subN;
+		MPI_Request *request;
+		
+		Isend_subdataset(dataSet, dest, start, subN, &request);
+		MPI_Request_free(&request[0]);
+		MPI_Request_free(&request[1]);
+		MPI_Request_free(&request[2]);
+		free(request);
+	}
+	
+	//Send last DataSet, of length [N/size + mod(N,size)]
+	MPI_Request *request;
+	Isend_subdataset(dataSet, size-1, (size-1)*subN, subN+mod, &request);
+	MPI_Request_free(&request[0]);
+	MPI_Request_free(&request[1]);
+	MPI_Request_free(&request[2]);
+	free(request);
+}
 
 void Isend_subdataset(DataSet *dataSet, int dest, int start, int subN, MPI_Request **request)
 {	
@@ -39,15 +82,14 @@ void Isend_subdataset(DataSet *dataSet, int dest, int start, int subN, MPI_Reque
 	MPI_Send( &subN, 1, MPI_INT, dest, 0, MPI_COMM_WORLD );
 	MPI_Send( &D, 	 1, MPI_INT, dest, 1, MPI_COMM_WORLD );
 	
-	
-	request = (MPI_Request**) malloc(3*sizeof(MPI_Request*));
-	
+	*request = (MPI_Request*) malloc(3*sizeof(MPI_Request));
+
 	MPI_Isend( &(dataSet->data[start*D]), D*subN, MPI_DOUBLE, dest, DATA_TAG,  \
-		MPI_COMM_WORLD,  request[0]);
+		MPI_COMM_WORLD,  &(*request)[0]);
 	MPI_Isend( &(dataSet->label[start]),  subN,   MPI_INT,    dest, LABEL_TAG, \
-		MPI_COMM_WORLD,  request[0]);
+		MPI_COMM_WORLD,  &(*request)[1]);
 	MPI_Isend( &(dataSet->index[start]),  subN,   MPI_INT,    dest, INDEX_TAG, \
-		MPI_COMM_WORLD,  request[0]);
+		MPI_COMM_WORLD,  &(*request)[2]);
 }
 
 /**
@@ -71,10 +113,10 @@ void Ireceive_dataset(DataSet *dataSet, int src, MPI_Request **request){
 	allocate_empty_dataset(dataSet,N,D);
 	
 	/*Receive like cray-cray */
-	request = (MPI_Request**) malloc(3*sizeof(MPI_Request*));
-	MPI_Irecv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, request[0]);
-	MPI_Irecv(dataSet->label, N, MPI_INT, 	  src, LABEL_TAG, MPI_COMM_WORLD,  request[1]);
-	MPI_Irecv(dataSet->index, N, MPI_INT, 	  src, INDEX_TAG, MPI_COMM_WORLD,  request[2]);
+	*request = (MPI_Request*) malloc(3*sizeof(MPI_Request));
+	MPI_Irecv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, &(*request)[0]);
+	MPI_Irecv(dataSet->label, N, MPI_INT, 	  src, LABEL_TAG, MPI_COMM_WORLD, &(*request)[1]);
+	MPI_Irecv(dataSet->index, N, MPI_INT, 	  src, INDEX_TAG, MPI_COMM_WORLD, &(*request)[2]);
 }
 
 void send_subdataset(DataSet *dataSet, int dest, int start, int subN)
@@ -107,15 +149,12 @@ void receive_dataset(DataSet *dataSet, int src){
 	MPI_Status status;
 	int N, D;
 	
-	
-
 	MPI_Recv(&N, 1, MPI_INT, src, 0, MPI_COMM_WORLD, &status);
 	MPI_Recv(&D, 1, MPI_INT, src, 1, MPI_COMM_WORLD, &status);
 
 	/*Allocate Appropriately*/
 	allocate_empty_dataset(dataSet,N,D);
-	printf("Input DataSet : %d x %d = %d \n", N,D, N*D);
-	
+
 	/*Receive like cray-cray */
 	MPI_Recv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, &status);
 	MPI_Recv(dataSet->label, N, MPI_INT, 	 src, LABEL_TAG, MPI_COMM_WORLD, &status);
@@ -126,10 +165,6 @@ void wait_for_request(MPI_Request **request, int count)
 {
 	int r;
 	for(r=0; r<count; r++)
-	{
-		MPI_Wait(request[r], NULL);
-		printf("WATIED\n");
-	}
-		
+		MPI_Wait(&(*request)[r], NULL);
 	//printf("Complete Dataset has been received\n");
 }
