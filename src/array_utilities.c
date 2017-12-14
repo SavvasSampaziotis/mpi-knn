@@ -114,6 +114,8 @@ void deallocate_dataset(DataSet* dataSet)
 /**
 	Resizes the dataSet's allocated memory. 
 
+	The address and size of the actual struct remains unchanged. 
+
 	int start = i-th datapoint that will be the first entry to the new data set.  
 */
 void reallocate_dataset(DataSet* dataSet, int newN)

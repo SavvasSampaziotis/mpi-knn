@@ -43,12 +43,18 @@ int main(int argc, char** argv){
 
 	MPI_Type_commit(&MPI_DATAPOINT);
 	
+	/** Send just a Subset of the dataSet */
+	N = N - 2;
+
 	if(rank==0)
 	{	
-
-		MPI_Send( dataSet.data, (N-2)*D, MPI_DOUBLE, destRank, 0, MPI_COMM_WORLD);
-		MPI_Send( dataSet.label, N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
-		MPI_Send( dataSet.index, N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
+		/* 
+		Send datapoints 1 ... N-1. Datapoints 0 and N are ommitted. 
+		This is done for testing purposes 
+		*/
+		MPI_Send( &(dataSet.data[D]), (N-2)*D, MPI_DOUBLE, destRank, 0, MPI_COMM_WORLD);
+		MPI_Send( &(dataSet.label[1]), N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
+		MPI_Send( &(dataSet.index[1]), N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
 
 		printDataSet( &dataSet );
 		printf("---------SENT\n");

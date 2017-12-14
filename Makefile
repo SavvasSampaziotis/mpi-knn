@@ -18,7 +18,7 @@ all: $(TARGET)
 $(TARGET): clean knn_utilities mpi_utilities array_utilities $(SRC)/$(TARGET).c 
 	@echo [MAKE]: Building and Linking $(TARGET)
 	@$(CC) $(SRC)/$@.c -o $(BIN)/$(TARGET) $(OBJ) $(CFLAGS)
-	mpirun -np 5 ./out/$@ 
+	
 
 knn_utilities: array_utilities $(SRC)/knn_utilities.c
 	@echo [MAKE]: Building $@
@@ -41,3 +41,6 @@ array_utilities: $(SRC)/array_utilities.c
 clean:
 	rm -rf $(BIN) 
 	clear 
+
+run: all
+	mpirun -np 3 ./out/$(TARGET)
