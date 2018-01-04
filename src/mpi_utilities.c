@@ -7,10 +7,10 @@
 
 
 void send_subdataset(DataSet *dataSet, int dest, int start, int subN);
-void receive_dataset(DataSet *dataSet, int src);
+void receive_dataset(DataSet *dataSet, int src, int D);
 
 void Isend_subdataset(DataSet *dataSet, int dest, int start, int subN, MPI_Request **request);
-void Ireceive_dataset(DataSet *dataSet, int src, MPI_Request **request);
+void Ireceive_dataset(DataSet *dataSet, int src, int D, MPI_Request **request);
 
 
 
@@ -33,8 +33,8 @@ void Isend_subdataset(DataSet *dataSet, int dest, int start, int subN, /*out*/ M
 {	
 	int D = dataSet->D;
 	//Send size first, so that we can preallocate accordingly.
-	MPI_Send( &subN, 1, MPI_INT, dest, 0, MPI_COMM_WORLD );
-	MPI_Send( &D, 	 1, MPI_INT, dest, 1, MPI_COMM_WORLD );
+	//MPI_Send( &subN, 1, MPI_INT, dest, 0, MPI_COMM_WORLD );
+	//MPI_Send( &D, 	 1, MPI_INT, dest, 1, MPI_COMM_WORLD );
 	
 	*request = (MPI_Request*) malloc(3*sizeof(MPI_Request));
 
@@ -73,21 +73,21 @@ void Isend_dataset(DataSet *dataSet, int dest, /*out*/ MPI_Request **requests)
 
 	ref: http://mpitutorial.com/tutorials/dynamic-receiving-with-mpi-probe-and-mpi-status/
 */
-void Ireceive_dataset(DataSet *dataSet, int src, /*out*/ MPI_Request **request){
+void Ireceive_dataset(DataSet *dataSet, int src, int D, /*out*/ MPI_Request **request){
 	MPI_Status status;
-	int N, D;
+	int N;
 	
-	MPI_Recv(&N, 1, MPI_INT, src, 0, MPI_COMM_WORLD, &status);
-	MPI_Recv(&D, 1, MPI_INT, src, 1, MPI_COMM_WORLD, &status);
+	MPI_Probe(src, LABEL_TAG, MPI_COMM_WORLD, &status);
+	MPI_Get_count(&status, MPI_INT, &N);
 
 	/*Allocate Mem Appropriately*/
 	allocate_empty_dataset(dataSet,N,D);
 	
 	/*Receive like cray-cray */
 	*request = (MPI_Request*) malloc(3*sizeof(MPI_Request));
-	MPI_Irecv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, &(*request)[0]);
 	MPI_Irecv(dataSet->label, N, MPI_INT, 	  src, LABEL_TAG, MPI_COMM_WORLD, &(*request)[1]);
 	MPI_Irecv(dataSet->index, N, MPI_INT, 	  src, INDEX_TAG, MPI_COMM_WORLD, &(*request)[2]);
+	MPI_Irecv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, &(*request)[0]);
 }
 
 void wait_for_request(MPI_Request **request, int count)
@@ -142,20 +142,20 @@ void send_dataset(DataSet *dataSet, int dest)
 	DataSet dataSet = the original Dataset struct.
 	int src = mpi source process 
 */
-void receive_dataset(DataSet *dataSet, int src){
+void receive_dataset(DataSet *dataSet,  int src, int D){
 	MPI_Status status;
-	int N, D;
+	int N;
 	
-	MPI_Recv(&N, 1, MPI_INT, src, 0, MPI_COMM_WORLD, &status);
-	MPI_Recv(&D, 1, MPI_INT, src, 1, MPI_COMM_WORLD, &status);
+	MPI_Probe(src, LABEL_TAG, MPI_COMM_WORLD, &status);
+	MPI_Get_count(&status, MPI_INT, &N);
 
 	/*Allocate Appropriately*/
-	allocate_empty_dataset(dataSet,N,D);
+	allocate_empty_dataset(dataSet,N, D);
 
 	/*Receive like cray-cray */
-	MPI_Recv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, &status);
 	MPI_Recv(dataSet->label, N, MPI_INT, 	 src, LABEL_TAG, MPI_COMM_WORLD, &status);
 	MPI_Recv(dataSet->index, N, MPI_INT, 	 src, INDEX_TAG, MPI_COMM_WORLD, &status);
+	MPI_Recv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, &status);
 }
 
 
@@ -168,11 +168,11 @@ void receive_dataset(DataSet *dataSet, int src){
 
 	For the use of Process with RANK=0 ONLY.
 */
-void distribute_data(DataSet* dataSet, int rank, int size)
+void distribute_data(DataSet* dataSet, int rank, int size, int D)
 {	
-
 	if(rank==0)
 	{	
+		
 		int subN = dataSet->N/size;
 		int mod = dataSet->N % size;
 		int dest;
@@ -192,7 +192,7 @@ void distribute_data(DataSet* dataSet, int rank, int size)
 	else
 	{	
 		// No need for Irecv here. NOthing to do except receive everything...
-		receive_dataset(dataSet, 0);
+		receive_dataset(dataSet, 0, D);
 	}
 	
 	// Very important to WAIT for the distribution to finish, before start the processing of the data.
@@ -209,13 +209,14 @@ void distribute_data(DataSet* dataSet, int rank, int size)
 
 	For the use of Process with RANK=0 ONLY.
 */
-void Idistribute_data(DataSet* dataSet, int rank, int size)
+void Idistribute_data(DataSet* dataSet, int rank, int size, int D)
 {	
 
 	if(rank==0)
 	{	
 		int subN = dataSet->N/size;
 		int mod = dataSet->N % size;
+		
 		int dest;
 		
 		for(dest=1; dest<(size-1); dest++)
@@ -243,7 +244,7 @@ void Idistribute_data(DataSet* dataSet, int rank, int size)
 	else
 	{	
 		// No need for Irecv here. NOthing to do except receive everything...
-		receive_dataset(dataSet, 0);
+		receive_dataset(dataSet, 0, D);
 	}
 
 	// Very important to WAIT for the distribution to finish, before start the processing of the data.
