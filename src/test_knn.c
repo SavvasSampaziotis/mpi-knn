@@ -5,6 +5,7 @@
 
 #include "data_types.h"
 
+
 void test_distance_matrix();
 
 
@@ -13,7 +14,7 @@ void test_distance_matrix();
 struct timeval startwtime, endwtime;
 
 int N,D;	
-DataSet dataSet;
+DataSet dataSet_A,dataSet_B;
 
 int main(int argc, char** argv){
 	int i;
@@ -21,30 +22,34 @@ int main(int argc, char** argv){
 
 	//readData("./data/formatted_data/mnist_train_svd.txt", dataSet, &N, &D);
 	//readData("./data/formatted_data/mnist_train.txt", &dataSet);
-	readDataDUMMY(&dataSet, 10,4);
+	read_data_DUMMY(&dataSet_A, 5, 4);
+	//dataSet_B = dataSet_A;
+	read_data_DUMMY(&dataSet_B, 10, 4);
 
 
-	printDataSet(&dataSet);
+	//print_dataset(&dataSet_A);	print_dataset(&dataSet_B);
+
+
 //	for (i = 0; i<dataSet.N*dataSet.D; i++)
 //		printf("%lf\n", dataSet.data[i]);	
 	
 	int K = 3;
 	nnPoint** KNN;
-	knn(&dataSet, K, &KNN);
+	knn(&dataSet_A, &dataSet_B, K, &KNN);
 
-	for (i = 0; i<dataSet.N; i++){
+	for (i = 0; i<dataSet_A.N; i++){
 		printf("\n");
 		int k;
-
+		printf("Point %d:\t", dataSet_A.index[i]);	
 		for(k=0; k<K; k++)
 		{
 			printf("[%d %lf]\t", KNN[i][k].index, KNN[i][k].dist);
 		}
-
 		printf("\n");
 	}
 	
-	test_distance_matrix();
+
+	//test_distance_matrix();
 
 	return 0;
 }
@@ -58,11 +63,11 @@ void test_distance_matrix(){
 	int i;
 	double  seq_time;
 
-	nnPoint ** distMatrix;
+	nnPoint ** distMatrixOMP;
 
 	gettimeofday (&startwtime, NULL);
 	{
-		distance_matrix_OMP(&dataSet, &distMatrix);
+		distance_matrix_OMP(&dataSet_A, &dataSet_B, &distMatrixOMP);
 	}	
 	gettimeofday (&endwtime, NULL);
  	seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
@@ -70,41 +75,59 @@ void test_distance_matrix(){
 	printf("\n Parallel Time: %f\n", seq_time);
 	
 
+	for(i=0; i<dataSet_A.N; i++)
+		free(distMatrixOMP[i]);
+	free(distMatrixOMP);
+/*
 	printf("\n*** Distance Matrix OMP ***\n");
-	for(i=0; i<dataSet.N; i++){
+	for(i=0; i<dataSet_A.N; i++){
 		int j;
 		printf("\n");
-		for(j=0; j<dataSet.N; j++)
-			printf("%lf ", distMatrix[i][j].dist);
+		for(j=0; j<dataSet_B.N; j++)
+			printf("%lf ", distMatrixOMP[i][j].dist);
 	}
-	
+	*/
 
-	
-	for(i=0; i<dataSet.N; i++)
-		free(distMatrix[i]);
-	free(distMatrix);
-
+	nnPoint ** distMatrixSEQ;
 	gettimeofday (&startwtime, NULL);
 	{
-		distance_matrix_SEQ(&dataSet, &distMatrix);
+		distance_matrix_SEQ(&dataSet_A, &dataSet_B, &distMatrixSEQ);
 	}
 	gettimeofday (&endwtime, NULL);
  	seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
 		      + endwtime.tv_sec - startwtime.tv_sec);
 	printf("\n Serial Time: %f\n", seq_time);
-
+/*
 	printf("\n*** Distance Matrix SERIAL ***\n");
-	for(i=0; i<dataSet.N; i++){
+	for(i=0; i<dataSet_A.N; i++){
 		int j;
 		printf("\n");
-		for(j=0; j<dataSet.N; j++)
-			printf("%lf ", distMatrix[i][j].dist);
+		for(j=0; j<dataSet_B.N; j++)
+			printf("%lf ", distMatrixSEQ[i][j].dist);
+	}
+*/
+
+
+	for(i=0; i<dataSet_A.N; i++)
+		free(distMatrixSEQ[i]);
+	free(distMatrixSEQ);
+/*
+	for(i=0; i<dataSet_A.N; i++){
+		int j;
+		for(j=0; j<dataSet_B.N; j++)
+		{
+			double temp = distMatrixOMP[i][j].dist - distMatrixSEQ[i][j].dist;
+			if(temp!=0)
+			{
+				printf("\n\nERROR IN DIST MATRIX\n");
+				break;
+			}
+
+		}
 	}
 		
-	for(i=0; i<dataSet.N; i++)
-		free(distMatrix[i]);
-	free(distMatrix);
+	*/
 
-
+	printf("\n");
 }
 

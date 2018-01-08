@@ -15,8 +15,8 @@
 #include "data_types.h"
 
 double calc_dist(double* A, double* B, int D);
-void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix);
-void distance_matrix_OMP(DataSet *dataSet, nnPoint*** distMatrix);
+void distance_matrix_SEQ(DataSet *localDataSet, DataSet *givenDataSet,  nnPoint*** distMatrix);
+void distance_matrix_OMP(DataSet *localDataSet, DataSet *givenDataSet,  nnPoint*** distMatrix);
 int cmpfunc (const void * a, const void * b);
 
 /**
@@ -31,35 +31,44 @@ int cmpfunc (const void * a, const void * b);
 			for each  data-point.
 		double** KNN_dist =[N,K]. Likewise, this matrix contains the calculated distance.
 */
-void knn(DataSet *dataSet, int K, nnPoint*** KNN )
+void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 {
-	int N = dataSet->N;
-	int D = dataSet->D;
+	int N = localDataSet->N;
+	int N2 = inputDataSet->N; // Only used in step 4
+	int D = localDataSet->D;
 	
-	// N-Array of knns' for each element. size(KNN)=[N,K]
+	/* Step 1: Init N-Array of knns' for each element. size(KNN)=[N,K]*/
 	*KNN = (nnPoint**) malloc(N*sizeof(nnPoint*));
 
-	// Calculate the Distance Matrix. 
+	/* Step 2: Calculate the Distance Matrix. */
 	nnPoint ** distMatrix;
-	distance_matrix_OMP( dataSet, &distMatrix);
+	distance_matrix_SEQ( localDataSet, inputDataSet, &distMatrix);
 
 	int i;
 	for(i=0; i<N; i++)
 		(*KNN)[i] = (nnPoint*) malloc(K*sizeof(nnPoint)); 	
 
+	/* Step 3: Sort each row of the Distance Matrix. */
 	#pragma omp parallel for schedule(static) num_threads(4)
 		for(i=0; i<N; i++)
 		{
-			 qsort(distMatrix[i], N, sizeof(nnPoint), cmpfunc);
-			 int j;
-			 for(j=0; j<K; j++){ // Disregard first element
-			 	(*KNN)[i][j].dist = distMatrix[i][j+1].dist;
-			 	(*KNN)[i][j].index = distMatrix[i][j+1].index;
-			 }
-			 	
-		}
+			 qsort(distMatrix[i], inputDataSet->N, sizeof(nnPoint), cmpfunc);
+			 int j, offset=0;
 
-	// Free distance matrix, AFTER we are done with the 
+			/* Step 4: Store the K-first elements of the sorted DistMatrix. These are the Knn's! */
+
+			/* Sometimes, the closest neighbor happens to be the input Datapoint itself.  
+				Omit the first element in case it has the same index. */			 
+		 	if(distMatrix[i][0].index == localDataSet->index[i])
+		 		offset = 1;
+
+			for(j=0; j<K; j++)
+			{
+				(*KNN)[i][j].dist = distMatrix[i][j+offset].dist;
+			 	(*KNN)[i][j].index = distMatrix[i][j+offset].index;
+			}	
+		}
+	/* Step 4:  Free distance matrix, AFTER we are done with the sorting and stuff */
 	for(i=0; i<N; i++)
 		free(distMatrix[i]);
 	free(distMatrix);
@@ -72,30 +81,25 @@ void knn(DataSet *dataSet, int K, nnPoint*** KNN )
 	distMatrix is symmetric with its diagonal==0. Thus, the calculation is 
 	done efficiently, by performing N(N-1)/2 calc_dist calls instead of N^2.  
 */
-void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix)
+void distance_matrix_SEQ(DataSet *localDataSet, DataSet *givenDataSet,  nnPoint*** distMatrix)
 {		
-	int N = dataSet->N;
-	int D = dataSet->D;
+	int N = localDataSet->N;
+	int N2 = givenDataSet->N;
+	int D = localDataSet->D;
 	
 	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));		
 	int i;
 	for(i=0; i<N; i++)
-		(*distMatrix)[i] = (nnPoint*) malloc(N*sizeof(nnPoint));
+		(*distMatrix)[i] = (nnPoint*) malloc(N2*sizeof(nnPoint));
 
 	for(i=0; i<N; i++)
 	{
-		(*distMatrix)[i][i].dist = 0;
-		(*distMatrix)[i][i].index = dataSet->index[i];
-
 		int j;
-		for(j=i+1; j<N; j++)
+		for(j=0; j<N2; j++)
 		{
-			double d = calc_dist( dataSet->dataPoints[i], dataSet->dataPoints[j], D);
+			double d = calc_dist( localDataSet->dataPoints[i], givenDataSet->dataPoints[j], D);
 			(*distMatrix)[i][j].dist = d;
-			(*distMatrix)[i][j].index =  dataSet->index[j];
-			
-			(*distMatrix)[j][i].dist = d;
-			(*distMatrix)[j][i].index =  dataSet->index[i];
+			(*distMatrix)[i][j].index =  givenDataSet->index[j];
 		}
 	}
 }
@@ -113,50 +117,33 @@ void distance_matrix_SEQ(DataSet *dataSet, nnPoint*** distMatrix)
 	 This is due to the symmetrical-calculation of the matrix. 
 
 */
-void distance_matrix_OMP(DataSet *dataSet,  nnPoint*** distMatrix)
+void distance_matrix_OMP(DataSet *localDataSet, DataSet *givenDataSet,  nnPoint*** distMatrix)
 {
 	omp_set_num_threads(4);
 
-	int N = dataSet->N;
-	int D = dataSet->D;
-	//DataPoint* dataPoints = dataSet->dataPoints;
-
+	int N = localDataSet->N;
+	int N2 = givenDataSet->N;
+	int D = localDataSet->D;
+	
+	// Dist Matrix: [N1 x N2] 
 	*distMatrix = (nnPoint**) malloc(N*sizeof(nnPoint*));	
 	
 	int i;
 	for(i=0; i<N; i++)
-		(*distMatrix)[i] = (nnPoint*) malloc(N*sizeof(nnPoint));
+		(*distMatrix)[i] = (nnPoint*) malloc(N2*sizeof(nnPoint));
 	
 	/* This for-loop pairs the nested loops into workload of equal size.
 		 	1st j-loop with Nth loop, 2nd with (N-1)th etc.
 		 	That way eac thread performs N calculation in total.  */
-	#pragma omp parallel for schedule(static) 
-		for(i=0; i<N/2; i++)
+	#pragma omp parallel for schedule(auto) num_threads(4)
+		for(i=0; i<N; i++)
 		{
-			//This fills up the diagonal
-			(*distMatrix)[i][i].dist = 0;
-			(*distMatrix)[i][i].index = dataSet->index[i];
-
-			(*distMatrix)[N-i-1][N-i-1].dist = 0;
-			(*distMatrix)[N-i-1][N-i-1].index = dataSet->index[N-i-1];
-
 			int j;
-			for(j=i+1; j<N; j++)
+			for(j=0; j<N2; j++)
 			{
-				double d = calc_dist(dataSet->dataPoints[i], dataSet->dataPoints[j], D);
+				double d = calc_dist( localDataSet->dataPoints[i], givenDataSet->dataPoints[j], D);
 				(*distMatrix)[i][j].dist = d;
-				(*distMatrix)[i][j].index = dataSet->index[j];
-				
-				(*distMatrix)[j][i].dist = d;
-				(*distMatrix)[j][i].index = dataSet->index[i];
-			}
-			for(j=N-i-1; j<N; j++){
-				double d = calc_dist(dataSet->dataPoints[N-i-1], dataSet->dataPoints[j], D);
-				(*distMatrix)[N-i-1][j].dist = d;
-				(*distMatrix)[N-i-1][j].index = dataSet->index[j];
-				
-				(*distMatrix)[j][N-i-1].dist = d;
-				(*distMatrix)[j][N-i-1].index = dataSet->index[N-i-1];
+				(*distMatrix)[i][j].index =  givenDataSet->index[j];
 			}
 		}
 }

@@ -1,25 +1,30 @@
 
-CC = mpicc
-#gcc
-
-#TARGET=test_knn
+TARGET=test_knn
 #TARGET=test_mpi
-TARGET=mpi_knn
+#TARGET=mpi_knn
+
+
+ifeq ($(TARGET),test_knn)
+OBJ = $(BIN)/knn_utilities.o $(BIN)/array_utilities.o 
+CC=mpicc
+else
+OBJ = $(BIN)/knn_utilities.o $(BIN)/array_utilities.o $(BIN)/mpi_utilities.o	
+CC=gcc
+endif
 
 CFLAGS= -fopenmp -g
+
 
 BIN=./out
 SRC=./src
 
-OBJ = $(BIN)/knn_utilities.o $(BIN)/array_utilities.o $(BIN)/mpi_utilities.o
- 
+
 all: $(TARGET)
 
 $(TARGET): clean knn_utilities mpi_utilities array_utilities $(SRC)/$(TARGET).c 
 	@echo [MAKE]: Building and Linking $(TARGET)
-	@$(CC) $(SRC)/$@.c -o $(BIN)/$(TARGET) $(OBJ) $(CFLAGS)
+	$(CC) $(SRC)/$@.c -o $(BIN)/$(TARGET) $(OBJ) $(CFLAGS)
 	
-
 knn_utilities: array_utilities $(SRC)/knn_utilities.c
 	@echo [MAKE]: Building $@
 	@$(CC) -c $(SRC)/$@.c $(CFLAGS) 
@@ -39,8 +44,12 @@ array_utilities: $(SRC)/array_utilities.c
 	@mv $@.o $(BIN)
 
 clean:
+	clear
 	rm -rf $(BIN) 
-	clear 
 
 run: all
-	mpirun -np 3 ./out/$(TARGET)
+ifeq ($(TARGET),test_knn)
+	./out/$(TARGET)
+else
+	mpirun -np 2 ./out/$(TARGET)
+endif
