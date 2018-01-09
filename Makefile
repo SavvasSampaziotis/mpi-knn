@@ -1,15 +1,15 @@
 
-TARGET=test_knn
+#TARGET=test_knn
 #TARGET=test_mpi
-#TARGET=mpi_knn
+TARGET=mpi_knn
 
 
 ifeq ($(TARGET),test_knn)
 OBJ = $(BIN)/knn_utilities.o $(BIN)/array_utilities.o 
-CC=mpicc
+CC=gcc
 else
 OBJ = $(BIN)/knn_utilities.o $(BIN)/array_utilities.o $(BIN)/mpi_utilities.o	
-CC=gcc
+CC=mpicc
 endif
 
 CFLAGS= -fopenmp -g

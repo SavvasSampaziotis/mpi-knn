@@ -19,15 +19,15 @@ DataSet dataSet_A,dataSet_B;
 int main(int argc, char** argv){
 	int i;
 
-
-	//readData("./data/formatted_data/mnist_train_svd.txt", dataSet, &N, &D);
+	//read_data("./data/formatted_data/mnist_train_svd.txt", &dataSet_A, &N, &D);
 	//readData("./data/formatted_data/mnist_train.txt", &dataSet);
+	
 	read_data_DUMMY(&dataSet_A, 5, 4);
-	//dataSet_B = dataSet_A;
-	read_data_DUMMY(&dataSet_B, 10, 4);
+	read_data_DUMMY(&dataSet_B, 5, 4);
 
 
-	//print_dataset(&dataSet_A);	print_dataset(&dataSet_B);
+	print_dataset(&dataSet_A);	
+	print_dataset(&dataSet_B);
 
 
 //	for (i = 0; i<dataSet.N*dataSet.D; i++)
@@ -35,8 +35,16 @@ int main(int argc, char** argv){
 	
 	int K = 3;
 	nnPoint** KNN;
-	knn(&dataSet_A, &dataSet_B, K, &KNN);
+	knn(&dataSet_A, &dataSet_A, K, &KNN);
 
+	print_knn_matrix(&KNN, dataSet_A.N, K);
+
+	update_knn(&dataSet_A, &dataSet_B, K, &KNN);
+
+	printf("--------------------------------------------------\n");
+	print_knn_matrix(&KNN,  dataSet_A.N, K);
+
+/*
 	for (i = 0; i<dataSet_A.N; i++){
 		printf("\n");
 		int k;
@@ -47,7 +55,20 @@ int main(int argc, char** argv){
 		}
 		printf("\n");
 	}
+	*/
 	
+
+
+
+
+	printf("\n\n\n----------------\n");
+	nnPoint *KNNMerged;
+	mergesort_nnpoint_arrays(&(KNN[0]), &(KNN[4]), K, &KNNMerged);
+	int k;
+	for(k=0; k<K; k++)
+	{
+		printf("[%d %lf]\t", KNNMerged[k].index, KNNMerged[k].dist);
+	}
 
 	//test_distance_matrix();
 
@@ -74,11 +95,6 @@ void test_distance_matrix(){
 		      + endwtime.tv_sec - startwtime.tv_sec);
 	printf("\n Parallel Time: %f\n", seq_time);
 	
-
-	for(i=0; i<dataSet_A.N; i++)
-		free(distMatrixOMP[i]);
-	free(distMatrixOMP);
-/*
 	printf("\n*** Distance Matrix OMP ***\n");
 	for(i=0; i<dataSet_A.N; i++){
 		int j;
@@ -86,7 +102,11 @@ void test_distance_matrix(){
 		for(j=0; j<dataSet_B.N; j++)
 			printf("%lf ", distMatrixOMP[i][j].dist);
 	}
-	*/
+	
+	for(i=0; i<dataSet_A.N; i++)
+		free(distMatrixOMP[i]);
+	free(distMatrixOMP);
+
 
 	nnPoint ** distMatrixSEQ;
 	gettimeofday (&startwtime, NULL);
@@ -97,7 +117,7 @@ void test_distance_matrix(){
  	seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
 		      + endwtime.tv_sec - startwtime.tv_sec);
 	printf("\n Serial Time: %f\n", seq_time);
-/*
+
 	printf("\n*** Distance Matrix SERIAL ***\n");
 	for(i=0; i<dataSet_A.N; i++){
 		int j;
@@ -105,7 +125,7 @@ void test_distance_matrix(){
 		for(j=0; j<dataSet_B.N; j++)
 			printf("%lf ", distMatrixSEQ[i][j].dist);
 	}
-*/
+
 
 
 	for(i=0; i<dataSet_A.N; i++)

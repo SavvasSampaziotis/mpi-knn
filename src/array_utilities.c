@@ -164,3 +164,41 @@ void print_array(double** A, int N, int M)
 		printf("\n");
 	}
 }
+
+void print_knn_matrix(nnPoint*** KNN, int N, int K)
+{
+	int i;
+	for (i = 0; i<N; i++){
+		printf("\n");
+		int k;
+
+		for(k=0; k<K; k++)
+		{
+			printf("[%d %lf]\t", (*KNN)[i][k].index, (*KNN)[i][k].dist);
+		}
+
+		printf("\n");
+	}
+}
+
+
+
+void mergesort_nnpoint_arrays(nnPoint **A, nnPoint **B, int K, /*out*/ nnPoint** C)
+{	
+	*C = malloc(K*sizeof(nnPoint));
+	int k, a=0,b=0;
+	for(k=0;k<K;k++)
+	{	
+		if( (*A)[a].dist < (*B)[b].dist)
+		{
+			(*C)[k] = (*A)[a]; // This is a Struct copy operation. Basically memcpy...
+			a++;
+		}
+		else
+		{
+			(*C)[k] = (*B)[b]; // This is a Struct copy operation. Basically memcpy...
+			b++;
+		}
+	}	
+}
+

@@ -15,6 +15,9 @@ int main(int argc, char** argv){
 	/* Init MPI */
 	int rank, size, P;
 	int D;
+	int K = 3;
+	nnPoint** KNN;
+
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -93,21 +96,13 @@ int main(int argc, char** argv){
 			Do thuh KNN thing, while nextDataSet is coming right up.
 		*/
 
-		int K = 3;
-		nnPoint** tempKNN;
-		knn( &localDataSet, &currentDataSet, K, &tempKNN );
-		print_knn_matrix(&tempKNN, localDataSet.N, K );
-
-
-		//distance_matrix_SEQ(&dataSet_A, &dataSet_B, &distMatrix);
-
-
-
-
-
-
-
-
+		
+		
+		if(p==0) // First Iteration
+			knn( &localDataSet, &currentDataSet, K, &KNN );
+		else
+			update_knn( &localDataSet, &currentDataSet, K, &KNN );
+		
 
 		wait_for_request(Rrequests,3);
 		wait_for_request(Srequests,3);
@@ -123,9 +118,11 @@ int main(int argc, char** argv){
 		if(p!=0)
 			deallocate_dataset(&currentDataSet);
 		currentDataSet = nextDataSet;
-
-
 	}
+
+
+
+	//print_knn_matrix(&tempKNN, localDataSet.N, K );
 	
 	
 	MPI_Finalize();

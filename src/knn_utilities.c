@@ -42,7 +42,7 @@ void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 
 	/* Step 2: Calculate the Distance Matrix. */
 	nnPoint ** distMatrix;
-	distance_matrix_SEQ( localDataSet, inputDataSet, &distMatrix);
+	distance_matrix_OMP( localDataSet, inputDataSet, &distMatrix);
 
 	int i;
 	for(i=0; i<N; i++)
@@ -73,6 +73,36 @@ void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 		free(distMatrix[i]);
 	free(distMatrix);
 }  
+
+/*
+	Performs the knn calcuation as well as the final KNN array-merging. 
+*/
+void update_knn(DataSet *localDataSet, DataSet *inputDataSet, int K, /*in-out*/ nnPoint*** KNN){
+	
+	nnPoint** newKNN;
+	knn(localDataSet, inputDataSet, K, &newKNN);
+
+	// Merge Knn's
+	int i;
+	// TODO: Make this in parallel
+	for(i=0; i<localDataSet->N; i++)
+	{
+		nnPoint *KNNMerged;
+		// KNN[i] is **nnPoint type and newKNN[i] is 
+		mergesort_nnpoint_arrays( &((*KNN)[i]), &(newKNN[i]), K, &KNNMerged); 
+
+		// Throw out old KNN list of the i-th datapoint.
+		free( (*KNN)[i]);
+		free( newKNN[i]);
+
+		// Replace old pointer with the merged Pointer.
+		(*KNN)[i] = KNNMerged;
+		
+	}
+
+	free(newKNN);
+}
+
 
 /**
 	distance_matrix calculates all distances between all datapoints and stores 
