@@ -31,6 +31,8 @@ int main(int argc, char** argv){
 	if(rank==0)
 	{
 		//read_data("./data/formatted_data/mnist_train.txt", &dataSet);
+		read_data_MPI("./data/formatted_data/mnist_train_svd.txt", &localDataSet);
+
 		read_data_DUMMY(&localDataSet, 15, 4);
 		D = localDataSet.D;
 
