@@ -12,7 +12,7 @@ OBJ = $(BIN)/knn_utilities.o $(BIN)/array_utilities.o $(BIN)/mpi_utilities.o
 CC=mpicc
 endif
 
-CFLAGS= -fopenmp -g
+CFLAGS= -fopenmp -O3
 
 
 BIN=./out
