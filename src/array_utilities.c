@@ -6,6 +6,15 @@
 #include "data_types.h"
 
 void allocate_empty_dataset(DataSet* dataSet, int N, int D);
+void read_data(const char* filename, DataSet *dataSet);
+void read_data_DUMMY(DataSet *dataSet, int N, int D);
+void deallocate_dataset(DataSet* dataSet);
+void reallocate_dataset(DataSet* dataSet, int newN);
+void print_dataset(DataSet* dataSet);
+void print_array(double** A, int N, int M);
+void print_knn_matrix(nnPoint*** KNN, int N, int K);
+void mergesort_nnpoint_arrays(nnPoint **A, nnPoint **B, int K, /*out*/ nnPoint** C);
+
 
 
 /**
@@ -60,7 +69,8 @@ void read_data(const char* filename, DataSet *dataSet)
 /**
 	Reads data from file...
 */
-void read_data_DUMMY(DataSet *dataSet, int N, int D){
+void read_data_DUMMY(DataSet *dataSet, int N, int D)
+{
 	int i,j;
 	
 	allocate_empty_dataset(dataSet,N,D);

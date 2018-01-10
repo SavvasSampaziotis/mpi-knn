@@ -1,16 +1,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi/mpi.h>
+#include <mpi.h>
 
 #include "data_types.h"
 
+void Isend_subdataset(DataSet *dataSet, int dest, int start, int subN, MPI_Request **request);
+void Isend_dataset(DataSet *dataSet, int dest, /*out*/ MPI_Request **requests);
+void Ireceive_dataset(DataSet *dataSet, int src, int D, MPI_Request **request);
+void wait_for_request(MPI_Request **request, int count);
 
 void send_subdataset(DataSet *dataSet, int dest, int start, int subN);
+void send_dataset(DataSet *dataSet, int dest);
 void receive_dataset(DataSet *dataSet, int src, int D);
 
-void Isend_subdataset(DataSet *dataSet, int dest, int start, int subN, MPI_Request **request);
-void Ireceive_dataset(DataSet *dataSet, int src, int D, MPI_Request **request);
+void distribute_data(DataSet* dataSet, int rank, int size, int D);
+void Idistribute_data(DataSet* dataSet, int rank, int size, int D);
+
 
 
 

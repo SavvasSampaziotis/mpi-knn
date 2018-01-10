@@ -14,10 +14,14 @@
 #include <string.h>
 #include "data_types.h"
 
-double calc_dist(double* A, double* B, int D);
+
+void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN );
+void update_knn(DataSet *localDataSet, DataSet *inputDataSet, int K, /*in-out*/ nnPoint*** KNN);
 void distance_matrix_SEQ(DataSet *localDataSet, DataSet *givenDataSet,  nnPoint*** distMatrix);
 void distance_matrix_OMP(DataSet *localDataSet, DataSet *givenDataSet,  nnPoint*** distMatrix);
 int cmpfunc (const void * a, const void * b);
+double calc_dist(double* A, double* B, int D);
+
 
 /**
 	The knn function calculates the K nearest neighbors for each element in array A.
@@ -77,7 +81,8 @@ void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 /*
 	Performs the knn calcuation as well as the final KNN array-merging. 
 */
-void update_knn(DataSet *localDataSet, DataSet *inputDataSet, int K, /*in-out*/ nnPoint*** KNN){
+void update_knn(DataSet *localDataSet, DataSet *inputDataSet, int K, /*in-out*/ nnPoint*** KNN)
+{
 	
 	nnPoint** newKNN;
 	knn(localDataSet, inputDataSet, K, &newKNN);
