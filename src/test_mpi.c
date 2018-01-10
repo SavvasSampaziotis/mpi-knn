@@ -20,70 +20,45 @@ int main(int argc, char** argv){
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
 	/* Generate Dummy Data*/
-	int N=10, D=4;
+	int N=0, D=0;
 	DataSet dataSet;
-	readDataDUMMY( &dataSet, N,D);
-
-	/* Set up some configuration utilities*/
-	int destRank = rank + 1;
-	int srcRank = rank - 1;
-	if (rank == size-1)	
-		destRank = 0;
-	if (rank == 0)
-		srcRank = size-1;
-
-	
-	printf("---------TYPE CREATED\n");
-	
-	MPI_Datatype MPI_DATAPOINT, tempType;
-
-	MPI_Type_contiguous(2, MPI_INT, &tempType);
-	MPI_Aint ub = (MPI_Aint) &(dataSet.dataPoints[1]) - (MPI_Aint) &(dataSet.dataPoints[0]);
-	MPI_Type_create_resized(tempType, 0, ub, &MPI_DATAPOINT);
-
-	MPI_Type_commit(&MPI_DATAPOINT);
-	
-	/** Send just a Subset of the dataSet */
-	N = N - 2;
-
-	if(rank==0)
-	{	
-		/* 
-		Send datapoints 1 ... N-1. Datapoints 0 and N are ommitted. 
-		This is done for testing purposes 
-		*/
-		MPI_Send( &(dataSet.data[D]), (N-2)*D, MPI_DOUBLE, destRank, 0, MPI_COMM_WORLD);
-		MPI_Send( &(dataSet.label[1]), N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
-		MPI_Send( &(dataSet.index[1]), N-2, MPI_INT, destRank, 0, MPI_COMM_WORLD);
-
-		printDataSet( &dataSet );
-		printf("---------SENT\n");
-
-	}
-	else if(rank==1)
-	{
-		MPI_Status status;	
-
-		DataSet recvDataset;
-		allocateEmptyDataSet( &recvDataset, N-2,D); // Init dataset array
-		
-		MPI_Recv( recvDataset.data, (N-2)*D, MPI_DOUBLE, srcRank, 0, MPI_COMM_WORLD, &status);
-
-		MPI_Recv( recvDataset.label, N-2, MPI_INT, srcRank, 0, MPI_COMM_WORLD, &status);
-		MPI_Recv( recvDataset.index, N-2, MPI_INT, srcRank, 0, MPI_COMM_WORLD, &status);
-
-		printDataSet( &recvDataset);
-		
-
-		printf("---------RECEIVED\n");
-
-	}
 	
 
-	
-	MPI_Type_free(&MPI_DATAPOINT);
+	//read_data_MPI("./data/formatted_data/mnist_train_svd.txt", &dataSet, rank, size);
+	MPI_File fh;	
+	MPI_File_open(	MPI_COMM_WORLD, "./data/formatted_data/mnist_train_svd.txt",\
+	 				MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
 
-	//printf("SAVVAS\n");
+	
+	// Read Header
+	int buff[2];
+	MPI_Status status;
+	
+	MPI_Datatype headerType;
+	int hLengths[2] = {1,1};
+	MPI_Aint hDisps[2] = {0,3*8};
+	MPI_Datatype hTypes[2] = {MPI_INT, MPI_INT};
+	MPI_Type_struct(2, hLengths, hDisps, hTypes, &headerType );	
+	MPI_Type_commit(&headerType);
+	
+	MPI_File_set_view(fh, 0, MPI_INT, headerType, "native", MPI_INFO_NULL);
+
+	MPI_File_seek(fh, 0, MPI_SEEK_SET); // Move cursor 1 byte
+	MPI_File_read(fh, &N, 1, MPI_INT, &status);
+	MPI_File_seek(fh, 1, MPI_SEEK_CUR); // Move cursor 1 byte
+	MPI_File_read(fh, &D, 1, MPI_INT, &status);
+
+	//MPI_File_read(fh, &N, 1, MPI_INT, &status);
+	//MPI_File_read(fh, &D, 1, MPI_INT, &status);
+	
+	//MPI_File_set_view(fh, 1, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
+	printf("N=%d \t D=%d \n", N,D);
+	
+	MPI_Type_free(&headerType);
+	// Read Body of data-file
+	
+	MPI_File_close(&fh);
+
 
 	MPI_Finalize();
 	return 	0;
