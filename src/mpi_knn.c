@@ -58,9 +58,12 @@ int main(int argc, char** argv)
 	/* Broadcast Problem Dimensionality of original dataset to all processes */
 	MPI_Bcast( &D, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	
-	/* Distribute Sub-Datasets to all processes. This has Barrier in it */
+	/*
+		Distribute Sub-Datasets to all processes. This has Barrier in it.
+	 	NOTE: This is better than MPI_Scatter, cause this is non-blocking, 
+		meaning that the indeces-labels and datapoints are all sent in parallel 
+	*/
 	tic();
-	// TODO: Replace this with MPI_Scatter
 	Idistribute_data(&localDataSet, rank, size, D);
 	toc();
 	printf("[RANK %d]: Data Distribution Time: %f\n",rank, seq_time);
@@ -70,7 +73,6 @@ int main(int argc, char** argv)
 	if(rank==0)
 		reallocate_dataset(&localDataSet, (localDataSet.N)/size);
 
-	
 	/* 
 		Let the KNN-ing begin...
 	*/
@@ -118,9 +120,11 @@ int main(int argc, char** argv)
 		toc();
 		printf("[RANK %d]: Sub-DataSet Tranfer Time: %f\n",rank, seq_time);
 
-		/* Update Dataset pointers. For the first iterration of the algorithm,
-		 we must NOT deallocate the currentDataSet, otherwise the localDataSet 
-		 will be forever lost */
+		/* 
+		Update Dataset pointers. For the first iterration of the algorithm,
+		we must NOT deallocate the currentDataSet, otherwise the localDataSet 
+		will be forever lost
+		*/
 		if(p!=0)
 			deallocate_dataset(&currentDataSet);
 		currentDataSet = nextDataSet;
@@ -168,8 +172,11 @@ void write_knn_output()
 	int blockArray[2]= {1,1};
 	MPI_Aint dispArray[2];
 	MPI_Datatype array_of_types[2] = {MPI_INT, MPI_DOUBLE};
-	dispArray[0] =  (MPI_Aint)offsetof( nnPoint, index);
-	dispArray[1] =  (MPI_Aint)offsetof( nnPoint, dist);
+	//dispArray[0] =  (MPI_Aint)offsetof( nnPoint, index);
+	//dispArray[1] =  (MPI_Aint)offsetof( nnPoint, dist); This doesnt compile in Hellasgrid
+	dispArray[0] = 0; //Assume zero. CAUSE OFFSET DOESNT BLOODY WORK FOR GCC>4.0.5
+	dispArray[1] = 8;
+
 	MPI_Type_struct(2, blockArray, dispArray, array_of_types, &temp);
 	MPI_Type_create_resized(temp, dispArray[0], (MPI_Aint) 16, &MPI_KNN_TYPE);
 	MPI_Type_commit(&MPI_KNN_TYPE);
