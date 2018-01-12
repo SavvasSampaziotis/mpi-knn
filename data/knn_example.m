@@ -20,7 +20,7 @@ close all
 %% PARAMETERS
 
 % data parameters
-filename = 'mnist_train';
+filename = 'mnist_train_svd';
 varX     = 'train_X';
 varL     = 'train_labels';
 
@@ -45,8 +45,9 @@ ioData = matfile( ['./raw_data/',filename '.mat'] );
 X = ioData.(varX);
 L = ioData.(varL);
 
-X = X(1:10,:);
-L = L(1:10);
+X = X(1:15,1:3);
+L = L(1:15);
+
 
 % number of points
 nPoint = size( X, 1 );
@@ -109,7 +110,9 @@ lc = [7 5 7
 7 7 4 
 10 2 7 ];
 
-labels - lc
+save('knn_result.mat');
+
+% labels - lc
 %%------------------------------------------------------------
 %
 % AUTHORS

@@ -14,9 +14,8 @@ for f = 1:2
     
     [N, D] = size(train_X);
     % For testing purposes only
-    N = 10;
+%     N=15;
 %     D = 3;
-    
     n=1:N;  d = 1:D;
 
     joinData = [train_X(n,d), train_labels(n)];

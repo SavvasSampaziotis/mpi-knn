@@ -4,3 +4,6 @@
 out/
 
 *.m~
+
+data/raw_data/
+data/formatted_data/
