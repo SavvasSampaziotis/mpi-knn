@@ -99,8 +99,9 @@ void Ireceive_dataset(DataSet *dataSet, int src, int D, /*out*/ MPI_Request **re
 void wait_for_request(MPI_Request **request, int count)
 {
 	int r;
+	MPI_Status status;
 	for(r=0; r<count; r++)
-		MPI_Wait(&(*request)[r], NULL);
+		MPI_Wait(&(*request)[r], &status);
 	//printf("Complete Dataset has been received\n");
 }
 
