@@ -19,15 +19,15 @@ DataSet dataSet_A,dataSet_B;
 int main(int argc, char** argv){
 	int i;
 
-	//read_data("./data/formatted_data/mnist_train_svd.txt", &dataSet_A, &N, &D);
+	read_data("./data/formatted_data/mnist_train_svd.txt", &dataSet_A, &N, &D);
 	//readData("./data/formatted_data/mnist_train.txt", &dataSet);
 	
-	read_data_DUMMY(&dataSet_A, 5, 4);
+	//read_data_DUMMY(&dataSet_A, 5, 4);
 	read_data_DUMMY(&dataSet_B, 5, 4);
 
 
-	print_dataset(&dataSet_A);	
-	print_dataset(&dataSet_B);
+	//print_dataset(&dataSet_A);	
+	//print_dataset(&dataSet_B);
 
 
 //	for (i = 0; i<dataSet.N*dataSet.D; i++)
@@ -37,7 +37,7 @@ int main(int argc, char** argv){
 	nnPoint** KNN;
 	knn(&dataSet_A, &dataSet_A, K, &KNN);
 
-	print_knn_matrix(&KNN, dataSet_A.N, K);
+	/*print_knn_matrix(&KNN, dataSet_A.N, K);
 
 	update_knn(&dataSet_A, &dataSet_B, K, &KNN);
 
@@ -58,16 +58,20 @@ int main(int argc, char** argv){
 	*/
 	
 
-
-
-
 	printf("\n\n\n----------------\n");
-	nnPoint *KNNMerged;
-	mergesort_nnpoint_arrays(&(KNN[0]), &(KNN[4]), K, &KNNMerged);
+	nnPoint *KNNMerged = malloc(3*sizeof(nnPoint));
+	nnPoint *KNN_A = malloc(3*sizeof(nnPoint));
+	nnPoint *KNN_B = malloc(3*sizeof(nnPoint));
+
+	KNN_A[0].dist = 5; KNN_A[1].dist = 10; KNN_A[2].dist = 50;
+	KNN_B[0].dist = 0; KNN_B[1].dist = 20; KNN_A[2].dist = 40;
+
+	mergesort_nnpoint_arrays( &(KNN_A), &(KNN_B), K, &(KNNMerged) );
 	int k;
 	for(k=0; k<K; k++)
 	{
-		printf("[%d %lf]\t", KNNMerged[k].index, KNNMerged[k].dist);
+		//printf("[%d %lf]\t", KNNMerged[k].index, KNNMerged[k].dist);
+		printf("[%lf]\t", KNNMerged[k].dist);
 	}
 
 	//test_distance_matrix();

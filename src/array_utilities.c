@@ -60,7 +60,7 @@ void read_data(const char* filename, DataSet *dataSet)
 				printf("ERROR Reading label in %d row",i);
 		
 		dataSet->label[i] = temp;
-		dataSet->index[i] = i;
+		dataSet->index[i] = i+1;
 	}
 
 	fclose( fp );
@@ -192,7 +192,10 @@ void print_knn_matrix(nnPoint*** KNN, int N, int K)
 }
 
 
-
+/**
+	This function merges 2 nnPoint arrays of length-K, and returns a K-length sorted nnPoint array.  
+	WARNING: It is assumed that input arrays are already sorted.
+**/
 void mergesort_nnpoint_arrays(nnPoint **A, nnPoint **B, int K, /*out*/ nnPoint** C)
 {	
 	*C = malloc(K*sizeof(nnPoint));

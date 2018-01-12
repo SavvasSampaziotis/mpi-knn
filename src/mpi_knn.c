@@ -35,6 +35,7 @@ int main(int argc, char** argv)
 	}
 
 	K = atoi(argv[1]);
+	K++; // The self of each datapoint will be included in the final knn-set.
 	printf("K=%d\n",K);
 
 	int THREAD_NUM = 1<<atoi(argv[2]);
@@ -50,8 +51,8 @@ int main(int argc, char** argv)
 	if(rank==0)
 	{
 		//read_data("./data/formatted_data/mnist_train.txt", &dataSet);
-		//read_data("./data/formatted_data/mnist_train_svd.txt", &localDataSet);
-		read_data_DUMMY(&localDataSet, 15, 4);
+		read_data("./data/formatted_data/mnist_train_svd.txt", &localDataSet);
+		//read_data_DUMMY(&localDataSet, 15, 4);
 		D = localDataSet.D;
 	}
 
@@ -130,15 +131,15 @@ int main(int argc, char** argv)
 		currentDataSet = nextDataSet;
 	}
 
-
 	write_knn_output();
 
-	if(rank==0)
-		print_knn_matrix(&KNN, localDataSet.N, K);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	if(rank==1)
-		print_knn_matrix(&KNN, localDataSet.N, K);
+	int i;
+	for(i=0; i<size; i++)
+	{
+		if(rank==i)
+			print_knn_matrix(&KNN, localDataSet.N, K);
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
 
 	MPI_Finalize();
 	return 	0;

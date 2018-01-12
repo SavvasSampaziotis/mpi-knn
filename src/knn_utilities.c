@@ -56,23 +56,18 @@ void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 	#pragma omp parallel for schedule(auto)
 		for(i=0; i<N; i++)
 		{
-			 qsort(distMatrix[i], inputDataSet->N, sizeof(nnPoint), cmpfunc);
+			 qsort( distMatrix[i], inputDataSet->N, sizeof(nnPoint), cmpfunc);
 			 int j, offset=0;
 
 			/* Step 4: Store the K-first elements of the sorted DistMatrix. These are the Knn's! */
-
-			/* Sometimes, the closest neighbor happens to be the input Datapoint itself.  
-				Omit the first element in case it has the same index. */			 
-		 	if(distMatrix[i][0].index == localDataSet->index[i])
-		 		offset = 1;
-
 			for(j=0; j<K; j++)
-			{
-				(*KNN)[i][j].dist = distMatrix[i][j+offset].dist;
-			 	(*KNN)[i][j].index = distMatrix[i][j+offset].index;
+			{	
+				(*KNN)[i][j].dist = distMatrix[i][j].dist;
+			 	(*KNN)[i][j].index = distMatrix[i][j].index;
 			}	
 		}
-	/* Step 4:  Free distance matrix, AFTER we are done with the sorting and stuff */
+	
+	/* Step 5:  Free distance matrix, AFTER we are done with the sorting and stuff */
 	for(i=0; i<N; i++)
 		free(distMatrix[i]);
 	free(distMatrix);
@@ -83,7 +78,6 @@ void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 */
 void update_knn(DataSet *localDataSet, DataSet *inputDataSet, int K, /*in-out*/ nnPoint*** KNN)
 {
-	
 	nnPoint** newKNN;
 	knn(localDataSet, inputDataSet, K, &newKNN);
 
@@ -203,9 +197,13 @@ double calc_dist(double* A, double* B, int D){
 /**
 	Used for qsort. Compares two nnPoint, by distance
 */
-int cmpfunc (const void * a, const void * b) {
-   nnPoint* p1 = (nnPoint*) a;
-   nnPoint* p2 = (nnPoint*) b;
+int cmpfunc (const void * a, const void * b)
+{
+	nnPoint* p1 = (nnPoint*) a;
+	nnPoint* p2 = (nnPoint*) b;
 
-   return p1->dist - p2->dist;
+   	if (p1->dist < p2->dist)
+   		return -1;
+   	else 
+   		return 1;
 }
