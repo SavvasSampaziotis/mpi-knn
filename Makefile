@@ -51,5 +51,5 @@ run: all
 ifeq ($(TARGET),test_knn)
 	./out/$(TARGET)
 else
-	mpirun -np 2 ./out/$(TARGET)
+	mpirun -np 2 ./out/$(TARGET) 2 2
 endif

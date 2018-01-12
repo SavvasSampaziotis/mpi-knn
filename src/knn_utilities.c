@@ -53,7 +53,7 @@ void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 		(*KNN)[i] = (nnPoint*) malloc(K*sizeof(nnPoint)); 	
 
 	/* Step 3: Sort each row of the Distance Matrix. */
-	#pragma omp parallel for schedule(static) num_threads(4)
+	#pragma omp parallel for schedule(auto)
 		for(i=0; i<N; i++)
 		{
 			 qsort(distMatrix[i], inputDataSet->N, sizeof(nnPoint), cmpfunc);
@@ -90,20 +90,20 @@ void update_knn(DataSet *localDataSet, DataSet *inputDataSet, int K, /*in-out*/ 
 	// Merge Knn's
 	int i;
 	// TODO: Make this in parallel
-	for(i=0; i<localDataSet->N; i++)
-	{
-		nnPoint *KNNMerged;
-		// KNN[i] is **nnPoint type and newKNN[i] is 
-		mergesort_nnpoint_arrays( &((*KNN)[i]), &(newKNN[i]), K, &KNNMerged); 
+	#pragma omp parallel for schedule(auto)
+		for(i=0; i<localDataSet->N; i++)
+		{
+			nnPoint *KNNMerged;
+			// KNN[i] is **nnPoint type and newKNN[i] is 
+			mergesort_nnpoint_arrays( &((*KNN)[i]), &(newKNN[i]), K, &KNNMerged); 
 
-		// Throw out old KNN list of the i-th datapoint.
-		free( (*KNN)[i]);
-		free( newKNN[i]);
+			// Throw out old KNN list of the i-th datapoint.
+			free( (*KNN)[i]);
+			free( newKNN[i]);
 
-		// Replace old pointer with the merged Pointer.
-		(*KNN)[i] = KNNMerged;
-		
-	}
+			// Replace old pointer with the merged Pointer.
+			(*KNN)[i] = KNNMerged;
+		}
 
 	free(newKNN);
 }

@@ -31,7 +31,7 @@ void read_data(const char* filename, DataSet *dataSet)
 	fp = fopen( filename, "r" );
 
 	if(fp == 0){
-		printf("PROBLEM Opening file\n");
+		printf("[MPI_KNN]: PROBLEM Opening file\n");
 		return;
 	}
 
