@@ -48,32 +48,10 @@ int main(int argc, char** argv)
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
 	/* Read all Data and Distribute among the rest of the processes*/
-	if(rank==0)
-	{
-		//read_data("./data/formatted_data/mnist_train.txt", &dataSet);
-		read_data("./data/formatted_data/mnist_train_svd.txt", &localDataSet);
-		//read_data_DUMMY(&localDataSet, 15, 4);
-		D = localDataSet.D;
-	}
-
-	/* Broadcast Problem Dimensionality of original dataset to all processes */
-	MPI_Bcast( &D, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
+	//read_data_DUMMY(&localDataSet, 15, 4);
+	D = localDataSet.D;
 	
-	/*
-		Distribute Sub-Datasets to all processes. This has Barrier in it.
-	 	NOTE: This is better than MPI_Scatter, cause this is non-blocking, 
-		meaning that the indeces-labels and datapoints are all sent in parallel 
-	*/
-	tic();
-	Idistribute_data(&localDataSet, rank, size, D);
-	toc();
-	printf("[RANK %d]: Data Distribution Time: %f\n",rank, seq_time);
-	
-	/* As soon as all messages are DONE, we can downsize  the original dataSet of process with rank=0. 
-		The case of N/size not being an int is handled by the distribute_data() */
-	if(rank==0)
-		reallocate_dataset(&localDataSet, (localDataSet.N)/size);
-
 	/* 
 		Let the KNN-ing begin...
 	*/
@@ -132,14 +110,30 @@ int main(int argc, char** argv)
 	}
 
 	write_knn_output();
-
-	int i;
+	
+	/*
+	//int i;
 	for(i=0; i<size; i++)
 	{
 		if(rank==i)
 			print_knn_matrix(&KNN, localDataSet.N, K);
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
+	*/
+	int i;
+	for(i=0;i<size;i++)
+	{
+		if(rank==i)
+		{
+			printf("RANK %d\n",rank);
+			print_dataset(&localDataSet);	
+			printf("---------\n");
+			
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
+		
+
 
 	MPI_Finalize();
 	return 	0;

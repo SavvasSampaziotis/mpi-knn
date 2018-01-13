@@ -16,56 +16,6 @@ void print_knn_matrix(nnPoint*** KNN, int N, int K);
 void mergesort_nnpoint_arrays(nnPoint **A, nnPoint **B, int K, /*out*/ nnPoint** C);
 
 
-
-/**
-	Reads data from file. 
-
-	Reference Code from Tutorials Point and  http://www.cplusplus.com/reference/
-	 regarding the use of fscan  
-
-*/
-void read_data(const char* filename, DataSet *dataSet)
-{
-	// Open File
-	FILE *fp;
-	fp = fopen( filename, "r" );
-
-	if(fp == 0){
-		printf("[MPI_KNN]: PROBLEM Opening file\n");
-		return;
-	}
-
-	// Read File Header and parse dataSet size and dimensionality
-	int N,D;
-	char buff[15];
-	fscanf(fp, "%d\t%d\n", &N,&D);
-	printf("N=%d \t D=%d \n", N,D);
-	//*N = 10;	
-	//*D = 3;
-	allocate_empty_dataset(dataSet,N,D);
-	
-	int i,j;	
-	for(i=0; i<N; i++)
-	{
-		for(j=0; j<D; j++)
-		{
-			double  temp = 3;;
-			if (EOF == fscanf(fp, "%lf\t", &temp))
-				printf("ERROR Reading datapoint in %d row, %d column",i,j);
-			dataSet->dataPoints[i][j] = temp;
-		}
-
-		int temp = -10;
-		if (EOF == fscanf(fp, "%d\n", &temp))
-				printf("ERROR Reading label in %d row",i);
-		
-		dataSet->label[i] = temp;
-		dataSet->index[i] = i+1;
-	}
-
-	fclose( fp );
-}
-
 /**
 	Reads data from file...
 */
@@ -148,7 +98,7 @@ void reallocate_dataset(DataSet* dataSet, int newN)
 
 
 /**
-	Prints array of NxD elements 
+	Prints dataset-struct. 
 */
 void print_dataset(DataSet* dataSet)
 {

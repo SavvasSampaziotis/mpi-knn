@@ -14,9 +14,6 @@ void send_subdataset(DataSet *dataSet, int dest, int start, int subN);
 void send_dataset(DataSet *dataSet, int dest);
 void receive_dataset(DataSet *dataSet, int src, int D);
 
-void distribute_data(DataSet* dataSet, int rank, int size, int D);
-void Idistribute_data(DataSet* dataSet, int rank, int size, int D);
-
 
 void MPI_read_data(const char* filename, DataSet* dataSet, int rank, int size)
 {
@@ -37,6 +34,7 @@ void MPI_read_data(const char* filename, DataSet* dataSet, int rank, int size)
 	int mod = N % size;
 	if(rank==(size-1))
 		subN = subN + mod; //The last process will take the modulo of the N/size div
+
 	allocate_empty_dataset(dataSet, subN,D);
 
 	// Read Main body and store it in the dataset. Refere to data_types.h for more info.
@@ -49,7 +47,13 @@ void MPI_read_data(const char* filename, DataSet* dataSet, int rank, int size)
 
 	MPI_File_close(&fh);
 
-	printf("N=%d \t D=%d \n", subN,D);
+	// Calc the datapoint index of the dataset.
+	int i;
+	for(i=0;i<dataSet->N; i++)
+		dataSet->index[i] = i + rank*(subN);
+
+	printf("subN=%d \t N=%d \n", subN,size);
+	///printf("N=%d \t D=%d \n", subN,D);
 }
 
 
@@ -138,39 +142,24 @@ void wait_for_request(MPI_Request **request, int count)
 }
 
 
-
-
-
 /**
 	Blocking Send operation for a subset of the whole dataSet. 
 	
 	DataSet dataSet = the original Dataset struct.
 	int dest = mpi destination process 
-	int start = 0-based index of the first dataPoint of the dataset to be sent.
-	int subN = The total length of the sub-dataset to be sent.
-*/
-void send_subdataset(DataSet *dataSet, int dest, int start, int subN)
-{	
-	MPI_Status status;
-	int D = dataSet->D;
-	//Send size first, so that we can preallocate accordingly.
-	MPI_Send( &subN, 1, MPI_INT, dest, 0, MPI_COMM_WORLD );
-	MPI_Send( &D, 	 1, MPI_INT, dest, 1, MPI_COMM_WORLD );
-	
-	MPI_Send( &(dataSet->data[start*D]), D*subN, MPI_DOUBLE, dest, DATA_TAG,  \
-		MPI_COMM_WORLD);
-	MPI_Send( &(dataSet->label[start]),  subN,   MPI_INT,    dest, LABEL_TAG, \
-		MPI_COMM_WORLD);
-	MPI_Send( &(dataSet->index[start]),  subN,   MPI_INT,    dest, INDEX_TAG, \
-		MPI_COMM_WORLD);
-}
-
-/**
-	Wrapper function of send_subdataset.
 */
 void send_dataset(DataSet *dataSet, int dest)
 {
-	send_subdataset(dataSet, dest, 0, dataSet->N);
+	MPI_Status status;
+	int D = dataSet->D;
+	int N = dataSet->N;
+	
+	MPI_Send( dataSet->data, D*N, MPI_DOUBLE, dest, DATA_TAG,  \
+		MPI_COMM_WORLD);
+	MPI_Send( dataSet->label,  N,   MPI_INT,    dest, LABEL_TAG, \
+		MPI_COMM_WORLD);
+	MPI_Send( dataSet->index,  N,   MPI_INT,    dest, INDEX_TAG, \
+		MPI_COMM_WORLD);
 }
 
 /**
@@ -195,97 +184,4 @@ void receive_dataset(DataSet *dataSet,  int src, int D){
 	MPI_Recv(dataSet->label, N, MPI_INT, 	 src, LABEL_TAG, MPI_COMM_WORLD, &status);
 	MPI_Recv(dataSet->index, N, MPI_INT, 	 src, INDEX_TAG, MPI_COMM_WORLD, &status);
 	MPI_Recv(dataSet->data, N*D, MPI_DOUBLE, src, DATA_TAG,  MPI_COMM_WORLD, &status);
-}
-
-
-
-
-/**	
-	This function distributes the entire dataset to all processes.
-
-	The senging operation is BLOCKING.
-
-	For the use of Process with RANK=0 ONLY.
-*/
-void distribute_data(DataSet* dataSet, int rank, int size, int D)
-{	
-	if(rank==0)
-	{	
-		
-		int subN = dataSet->N/size;
-		int mod = dataSet->N % size;
-		int dest;
-		
-		for(dest=1; dest<(size-1); dest++)
-		{
-			int start = dest*subN;
-			MPI_Request *request;
-			send_subdataset(dataSet, dest, start, subN);
-		}
-		
-		//Send last DataSet, of length [N/size + mod(N,size)]
-		MPI_Request *request;
-		
-		send_subdataset(dataSet, size-1, (size-1)*subN, subN+mod);
-	}
-	else
-	{	
-		// No need for Irecv here. NOthing to do except receive everything...
-		receive_dataset(dataSet, 0, D);
-	}
-	
-	// Very important to WAIT for the distribution to finish, before start the processing of the data.
-	MPI_Barrier(MPI_COMM_WORLD);
-}
-
-/**	
-	This function distributes the entire dataset to all processes.
-
-	The sending operation is NON-BLOCKING, but the use of barrier makes no difference really. 
-	
-	The MPI_requests objects are immediately freed. There is no need for the wait() call, 
-	thanks to an MPI_Barrier in use. 
-
-	For the use of Process with RANK=0 ONLY.
-*/
-void Idistribute_data(DataSet* dataSet, int rank, int size, int D)
-{	
-
-	if(rank==0)
-	{	
-		int subN = dataSet->N/size;
-		int mod = dataSet->N % size;
-		
-		int dest;
-		
-		for(dest=1; dest<(size-1); dest++)
-		{
-			int start = dest*subN;
-			MPI_Request *request;
-			
-			Isend_subdataset(dataSet, dest, start, subN, &request);
-			MPI_Request_free(&request[0]);
-			MPI_Request_free(&request[1]);
-			MPI_Request_free(&request[2]);
-			free(request);
-		}
-		
-		//Send last DataSet, of length [N/size + mod(N,size)]
-		MPI_Request *request;
-		Isend_subdataset(dataSet, size-1, (size-1)*subN, subN+mod, &request);
-		MPI_Request_free(&request[0]);
-		MPI_Request_free(&request[1]);
-		MPI_Request_free(&request[2]);
-		free(request);
-
-		/* The MPI_request objects are freed, because the MPI_Barrier renders them redundunt. */
-	}
-	else
-	{	
-		// No need for Irecv here. NOthing to do except receive everything...
-		receive_dataset(dataSet, 0, D);
-	}
-
-	// Very important to WAIT for the distribution to finish, before start the processing of the data.
-	MPI_Barrier(MPI_COMM_WORLD);
 }

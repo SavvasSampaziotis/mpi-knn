@@ -14,8 +14,8 @@ for f = 1:2
     
     [N, D] = size(train_X);
     % For testing purposes only
-    N=7;
-    D = 2;
+    N=15;
+    D = 4;
     n=1:N;  d = 1:D;
  
     header = [N,D];

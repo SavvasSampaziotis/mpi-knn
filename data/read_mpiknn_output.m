@@ -12,7 +12,8 @@ for i=1:15
         
     end
 end
+fclose(fileID);
 
 A(:,2:end)-IDX
 B(:,2:end)-DIST
-fclose(fileID);
+
