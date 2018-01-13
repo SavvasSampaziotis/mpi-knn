@@ -15,5 +15,5 @@ end
 fclose(fileID);
 
 A(:,2:end)-IDX
-B(:,2:end)-DIST
+B(:,2:end)-DIST.^2
 

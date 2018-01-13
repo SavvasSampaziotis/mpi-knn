@@ -28,7 +28,6 @@ void read_data_DUMMY(DataSet *dataSet, int N, int D)
 	for(i=0; i<N; i++)
 	{
 		dataSet->index[i] = i;
-		dataSet->label[i] = i;
 		for(j=0; j<D; j++)
 			dataSet->dataPoints[i][j] = i+j;
 	}
@@ -44,13 +43,11 @@ void allocate_empty_dataset(DataSet* dataSet, int N, int D){
 	dataSet->dataPoints = (double**) malloc(N*sizeof(double*));
 
 	dataSet->index = (int*) malloc(N*sizeof(int));
-	dataSet->label = (int*) malloc(N*sizeof(int));
-
+	
 	for(i=0; i<N; i++)
 	{
 		dataSet->index[i] = -1;
-		dataSet->label[i] = -1;
-
+		
 		// Each dataPoint points to a row of the whole data matrix
 		dataSet->dataPoints[i] = &(dataSet->data[D*i]);
 		for(j=0; j<D; j++)
@@ -87,7 +84,6 @@ void reallocate_dataset(DataSet* dataSet, int newN)
 
 	dataSet->dataPoints = (double**) realloc( dataSet->dataPoints, newN*sizeof(double*) );
 	dataSet->index = (int*) realloc(dataSet->index, newN*sizeof(int));
-	dataSet->label = (int*) realloc(dataSet->label, newN*sizeof(int));
 
 	// re init the pointer of each datapoint, in case realloc() 
 	// moved the content to another memory location
@@ -110,7 +106,7 @@ void print_dataset(DataSet* dataSet)
 		{
 			printf("%lf ",dataSet->dataPoints[i][j]);	
 		}
-		printf("]\t%d\n", dataSet->label[i]);
+		printf("]\t\n");
 	}
 }
 
@@ -134,7 +130,7 @@ void print_knn_matrix(nnPoint*** KNN, int N, int K)
 
 		for(k=0; k<K; k++)
 		{
-			printf("[%d %lf]\t", (*KNN)[i][k].index, (*KNN)[i][k].dist);
+			printf("[%d %lf]\t", (*KNN)[i][k].index, (*KNN)[i][k].dist*10000);
 		}
 
 		printf("\n");

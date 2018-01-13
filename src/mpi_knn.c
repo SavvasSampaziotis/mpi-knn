@@ -93,8 +93,8 @@ int main(int argc, char** argv)
 		printf("[RANK %d]: KNN-Time: %f\n",rank, seq_time);
 
 		// Wait for communication to finish up
-		wait_for_request(Rrequests,3);
-		wait_for_request(Srequests,3);
+		wait_for_request(Rrequests,2);
+		wait_for_request(Srequests,2);
 		
 		toc();
 		printf("[RANK %d]: Sub-DataSet Tranfer Time: %f\n",rank, seq_time);
@@ -111,16 +111,16 @@ int main(int argc, char** argv)
 
 	write_knn_output();
 	
-	/*
-	//int i;
+	
+	int i;
 	for(i=0; i<size; i++)
 	{
 		if(rank==i)
 			print_knn_matrix(&KNN, localDataSet.N, K);
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
-	*/
-	int i;
+	
+	//int i;
 	for(i=0;i<size;i++)
 	{
 		if(rank==i)

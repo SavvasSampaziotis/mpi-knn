@@ -10,7 +10,6 @@
 
 
 #define DATA_TAG 3
-#define LABEL_TAG 4	
 #define INDEX_TAG 5
 
 /* 
@@ -21,9 +20,10 @@ typedef struct DataSetStruct
 {	
 	int N;
 	int D;
-	double* data; // Continous array all the data. Perfect for MPI
+	double* data; // Continous array of all the data. Perfect for MPI
 	double** dataPoints; //Array of pointers pointing on segments of data.
-	int* label;
+	//int* label;  This is obsolete. Only indeces are actually useful, 
+	// so to minimize comm-time this will be ommited... You can refer to git tag [XXX] fro more info.
 	int* index;
 } DataSet;
 
