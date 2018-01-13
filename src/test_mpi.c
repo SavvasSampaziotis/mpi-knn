@@ -1,4 +1,8 @@
-
+/**
+	This is a test bed for various MPI utilities 
+	Author: Savvas Sampaziotis
+**/
+	
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -24,42 +28,27 @@ int main(int argc, char** argv){
 	DataSet dataSet;
 	
 
-	//read_data_MPI("./data/formatted_data/mnist_train_svd.txt", &dataSet, rank, size);
-	MPI_File fh;	
-	MPI_File_open(	MPI_COMM_WORLD, "./data/formatted_data/mnist_train_svd.txt",\
-	 				MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
-
+	MPI_read_data("./data/formatted_data/mnist_train_svd.txt", &dataSet, rank, size);
 	
-	// Read Header
-	int buff[2];
-	MPI_Status status;
 	
-	MPI_Datatype headerType;
-	int hLengths[2] = {1,1};
-	MPI_Aint hDisps[2] = {0,3*8};
-	MPI_Datatype hTypes[2] = {MPI_INT, MPI_INT};
-	MPI_Type_struct(2, hLengths, hDisps, hTypes, &headerType );	
-	MPI_Type_commit(&headerType);
 	
-	MPI_File_set_view(fh, 0, MPI_INT, headerType, "native", MPI_INFO_NULL);
-
-	MPI_File_seek(fh, 0, MPI_SEEK_SET); // Move cursor 1 byte
-	MPI_File_read(fh, &N, 1, MPI_INT, &status);
-	MPI_File_seek(fh, 1, MPI_SEEK_CUR); // Move cursor 1 byte
-	MPI_File_read(fh, &D, 1, MPI_INT, &status);
-
-	//MPI_File_read(fh, &N, 1, MPI_INT, &status);
-	//MPI_File_read(fh, &D, 1, MPI_INT, &status);
-	
-	//MPI_File_set_view(fh, 1, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
-	printf("N=%d \t D=%d \n", N,D);
-	
-	MPI_Type_free(&headerType);
-	// Read Body of data-file
-	
-	MPI_File_close(&fh);
+	int i;
+	for(i=0;i<size;i++)
+	{
+		if(rank==i)
+		{
+			printf("RANK %d\n",rank);
+			print_dataset(&dataSet);	
+			printf("---------\n");
+			
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
+		
 
 
+	
+	
 	MPI_Finalize();
 	return 	0;
 }

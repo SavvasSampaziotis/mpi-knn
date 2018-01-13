@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi/mpi.h>
+#include <mpi.h>
 
 #include "data_types.h"
 
@@ -18,7 +18,39 @@ void distribute_data(DataSet* dataSet, int rank, int size, int D);
 void Idistribute_data(DataSet* dataSet, int rank, int size, int D);
 
 
+void MPI_read_data(const char* filename, DataSet* dataSet, int rank, int size)
+{
+	int D=0, N=0;
+	MPI_File fh;
+	MPI_Status status;
+	MPI_File_open( MPI_COMM_WORLD, "./data/bin_data/mnist_train_svd.bin",\
+	 				MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+	
+	// Read Header
+	MPI_File_set_view(fh, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
+	MPI_File_read_at(fh, 0, &N, 1, MPI_INT, &status);
+	MPI_File_read_at(fh, 1, &D, 1, MPI_INT, &status);
+	
 
+	// Allocate sub-dataset 
+	int subN = N/size;
+	int mod = N % size;
+	if(rank==(size-1))
+		subN = subN + mod; //The last process will take the modulo of the N/size div
+	allocate_empty_dataset(dataSet, subN,D);
+
+	// Read Main body and store it in the dataset. Refere to data_types.h for more info.
+	MPI_File_set_view(fh, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL); 
+	
+	if(rank == size-1)
+		MPI_File_read_at(fh, 1+rank*(subN-mod)*D, dataSet->data, subN*D, MPI_DOUBLE, &status);
+	else
+		MPI_File_read_at(fh, 1+rank*(subN*D), dataSet->data, subN*D, MPI_DOUBLE, &status);
+
+	MPI_File_close(&fh);
+
+	printf("N=%d \t D=%d \n", subN,D);
+}
 
 
 /**
