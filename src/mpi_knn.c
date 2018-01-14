@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	mod = MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//read_data_DUMMY(&localDataSet, 100, 20);
-
+	
 
 	//MPI_read_data("./data/bin_data/mnist_train.bin", &localDataSet, rank, size);
 	D = localDataSet.D;
@@ -98,9 +98,12 @@ int main(int argc, char** argv)
 		toc(&knnChunkTime);
 
 		// Wait for communication to finish up
-		wait_for_request(Rrequests,2);
-		wait_for_request(Srequests,2);
-		toc(&commTime);		
+		if(size > 1)
+		{
+			wait_for_request(Rrequests,2);
+			wait_for_request(Srequests,2);
+		}
+			toc(&commTime);		
 		
 		/* 
 		Update Dataset pointers. For the first iterration of the algorithm,
@@ -120,7 +123,7 @@ int main(int argc, char** argv)
 	if(rank==0)
 		printf("knn-time = %lf\n",rank, knnTime.seqTime);
 
-	write_knn_output();
+	//write_knn_output();
 	
 	MPI_Finalize();
 	return 	0;
