@@ -45,7 +45,7 @@ ioData = matfile( ['./raw_data/',filename '.mat'] );
 X = ioData.(varX);
 L = ioData.(varL);
 
-X = X(1:15,1:3);
+X = X(1:15,1:4);
 L = L(1:15);
 
 

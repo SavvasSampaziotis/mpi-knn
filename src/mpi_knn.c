@@ -8,12 +8,11 @@
 
 void write_knn_output();
 void tic();
-void toc();
+double toc();
 
 // For time performance evaluation
 struct timeval startwtime, endwtime;
-double  seq_time;
-
+double knnTime, commTime;
 // Some 
 int rank, size;
 int D, K;
@@ -40,13 +39,17 @@ int main(int argc, char** argv)
 	int THREAD_NUM = 1<<atoi(argv[2]);
   	omp_set_num_threads(THREAD_NUM);
 	
+	knnTime = 0;
+	commTime = 0;
+
 	/* Init MPI */
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
 	/* Read all Data and Distribute among the rest of the processes*/
-	MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
+	//MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
+	read_data_DUMMY( &localDataSet, 10, 4);
 	//MPI_read_data("./data/bin_data/mnist_train.bin", &localDataSet, rank, size);
 	D = localDataSet.D;
 	
@@ -87,15 +90,14 @@ int main(int argc, char** argv)
 		else
 			update_knn( &localDataSet, &currentDataSet, K, &KNN );
 		
-		toc();
-		printf("[RANK %d]: KNN Time: %f\n",rank, seq_time);
+		knnTime += toc();
+		
 
 		// Wait for communication to finish up
 		wait_for_request(Rrequests,2);
 		wait_for_request(Srequests,2);
 		
-		toc();
-		printf("[RANK %d]: Tranfer Time: %f\n",rank, seq_time);
+		commTime += toc();
 
 		/* 
 		Update Dataset pointers. For the first iterration of the algorithm,
@@ -106,9 +108,75 @@ int main(int argc, char** argv)
 			deallocate_dataset(&currentDataSet);
 		currentDataSet = nextDataSet;
 	}
-
-	write_knn_output();
 	
+	printf("[RANK %d]: KNN=%f COMM=%f\n",rank, knnTime, commTime);
+
+	//write_knn_output();
+	
+	MPI_Finalize();
+	return 	0;
+}
+
+
+void tic()
+{
+	gettimeofday (&startwtime, NULL);
+}
+
+double toc()
+{
+	gettimeofday (&endwtime, NULL);
+	return  (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
+			      + endwtime.tv_sec - startwtime.tv_sec);
+}
+
+
+/**
+	This function writes the KNN utilising the MPI File I/O. 
+*/
+void write_knn_output()
+{
+	/* 
+		Declare special MPI datatype for the nnPoint struct
+		nnPoint = [int, 4-byte-hole, double];
+		MPI_KNN_TYPE = [MPI_INT,MPI_DOUBLE];
+	*/
+	MPI_Datatype temp, MPI_KNN_TYPE;
+	int blockArray[2]= {1,1};
+	MPI_Aint dispArray[2];
+	MPI_Datatype array_of_types[2] = {MPI_INT, MPI_DOUBLE};
+	//dispArray[0] =  (MPI_Aint)offsetof( nnPoint, index);
+	//dispArray[1] =  (MPI_Aint)offsetof( nnPoint, dist); This doesnt compile in Hellasgrid
+	dispArray[0] = 0; //Assume zero. CAUSE OFFSET DOESNT BLOODY WORK FOR GCC>4.0.5 in HG
+	dispArray[1] = 8;
+
+	MPI_Type_struct(2, blockArray, dispArray, array_of_types, &temp);
+	MPI_Type_create_resized(temp, dispArray[0], (MPI_Aint) 16, &MPI_KNN_TYPE);
+	MPI_Type_commit(&MPI_KNN_TYPE);
+
+	/* 
+		Start Writing knn Indeces... The KNN data will be sorted by process.
+	*/
+	MPI_File fh;
+	MPI_File_open(MPI_COMM_WORLD, "mpi_knn_output", MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	MPI_File_set_view(fh, 0, MPI_KNN_TYPE, MPI_KNN_TYPE, "native",  MPI_INFO_NULL);
+
+	MPI_Status status;
+	int dataLength = (localDataSet.N-1)*(K-1);
+	int offset = (dataLength)*rank;
+	int c=0,i,j;
+	for(i=0;i<localDataSet.N;i++)
+		for(j=1;j<K;j++)
+		{	
+			MPI_File_write_at(fh, offset+c, &(KNN[i][j]), 1, MPI_KNN_TYPE, &status);
+			c++;
+		}
+
+	MPI_File_close(&fh);
+	MPI_Type_free(&MPI_KNN_TYPE);
+}
+
+
 	/*
 	int i;
 	for(i=0; i<size; i++)
@@ -131,65 +199,3 @@ int main(int argc, char** argv)
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 		*/
-	MPI_Finalize();
-	return 	0;
-}
-
-
-void tic()
-{
-	gettimeofday (&startwtime, NULL);
-}
-
-void toc()
-{
-	gettimeofday (&endwtime, NULL);
-	seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
-			      + endwtime.tv_sec - startwtime.tv_sec);
-}
-
-
-/**
-	This function writes the KNN utilising the MPI File I/O. 
-*/
-void write_knn_output()
-{
-	/* 
-		Declare special MPI datatype for the nnPoint struct
-		nnPoint = [int, 4-byte-hole, double];
-		MPI_KNN_TYPE = [MPI_INT,MPI_DOUBLE];
-	*/
-	MPI_Datatype temp, MPI_KNN_TYPE;
-	int blockArray[2]= {1,1};
-	MPI_Aint dispArray[2];
-	MPI_Datatype array_of_types[2] = {MPI_INT, MPI_DOUBLE};
-	//dispArray[0] =  (MPI_Aint)offsetof( nnPoint, index);
-	//dispArray[1] =  (MPI_Aint)offsetof( nnPoint, dist); This doesnt compile in Hellasgrid
-	dispArray[0] = 0; //Assume zero. CAUSE OFFSET DOESNT BLOODY WORK FOR GCC>4.0.5
-	dispArray[1] = 8;
-
-	MPI_Type_struct(2, blockArray, dispArray, array_of_types, &temp);
-	MPI_Type_create_resized(temp, dispArray[0], (MPI_Aint) 16, &MPI_KNN_TYPE);
-	MPI_Type_commit(&MPI_KNN_TYPE);
-
-	/* 
-		Start Writing knn Indeces... The KNN data will be sorted by process.
-	*/
-	MPI_File fh;
-	MPI_File_open(MPI_COMM_WORLD, "knn_indeces", MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
-	MPI_File_set_view(fh, 0, MPI_KNN_TYPE, MPI_KNN_TYPE, "native",  MPI_INFO_NULL);
-
-	MPI_Status status;
-	int dataLength = (localDataSet.N-1)*(K-1);
-	int offset = (dataLength)*rank;
-	int c=0,i,j;
-	for(i=0;i<localDataSet.N;i++)
-		for(j=1;j<K;j++)
-		{	
-			MPI_File_write_at(fh, offset+c, &(KNN[i][j]), 1, MPI_KNN_TYPE, &status);
-			c++;
-		}
-
-	MPI_File_close(&fh);
-	MPI_Type_free(&MPI_KNN_TYPE);
-}
