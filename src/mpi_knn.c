@@ -14,7 +14,7 @@ TimeInterval knnTime, commTime, knnChunkTime;
 
 // Some 
 int rank, size;
-int D, K;
+int D, K, mod; //mod = the module of N/size. This is nessesery for various operations 
 nnPoint** KNN;
 
 // The main datasets that will be used.
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
 	/* Read all Data and Distribute among the rest of the processes*/
-	MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
+	mod = MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//read_data_DUMMY(&localDataSet, 100, 20);
 
@@ -156,21 +156,32 @@ void write_knn_output()
 	*/
 	MPI_File fh;
 	MPI_File_open(MPI_COMM_WORLD, "mpi_knn_output", MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	if(fh<=0)
+		printf("[RANK %d]: Error Opeining Output file", rank);
+
 	MPI_File_set_view(fh, 0, MPI_KNN_TYPE, MPI_KNN_TYPE, "native",  MPI_INFO_NULL);
 
 	MPI_Status status;
-	int dataLength = (localDataSet.N-1)*(K-1);
-	int offset = (dataLength)*rank;
+	int dataLength = (localDataSet.N)*(K-1);
+	int offset;
+	if(rank==size-1)
+		offset = (localDataSet.N - mod)*(K-1)*rank;
+	else
+		offset = (localDataSet.N)*(K-1)*rank;
+
 	int c=0,i,j;
 	for(i=0;i<localDataSet.N;i++)
 		for(j=1;j<K;j++)
 		{	
+			//KNN[i][j].dist = 10;
+			//KNN[i][j].index = rank*100+i*10+j;
 			MPI_File_write_at(fh, offset+c, &(KNN[i][j]), 1, MPI_KNN_TYPE, &status);
 			c++;
 		}
 
 	MPI_File_close(&fh);
 	MPI_Type_free(&MPI_KNN_TYPE);
+
 }
 
 

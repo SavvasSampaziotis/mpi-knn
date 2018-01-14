@@ -44,33 +44,37 @@ void knn(DataSet *localDataSet, DataSet *inputDataSet, int K, nnPoint*** KNN )
 	/* Step 1: Init N-Array of knns' for each element. size(KNN)=[N,K]*/
 	*KNN = (nnPoint**) malloc(N*sizeof(nnPoint*));
 
-	/* Step 2: Calculate the Distance Matrix. */
-	nnPoint ** distMatrix;
-	distance_matrix_OMP( localDataSet, inputDataSet, &distMatrix);
-
 	int i;
 	for(i=0; i<N; i++)
 		(*KNN)[i] = (nnPoint*) malloc(K*sizeof(nnPoint)); 	
 
 	/* Step 3: Sort each row of the Distance Matrix. */
 	#pragma omp parallel for schedule(auto)
-		for(i=0; i<N; i++)
-		{
-			 qsort( distMatrix[i], inputDataSet->N, sizeof(nnPoint), cmpfunc);
-			 int j, offset=0;
-
-			/* Step 4: Store the K-first elements of the sorted DistMatrix. These are the Knn's! */
-			for(j=0; j<K; j++)
-			{	
-				(*KNN)[i][j].dist = distMatrix[i][j].dist;
-			 	(*KNN)[i][j].index = distMatrix[i][j].index;
-			}	
-		}
-	
-	/* Step 5:  Free distance matrix, AFTER we are done with the sorting and stuff */
 	for(i=0; i<N; i++)
-		free(distMatrix[i]);
-	free(distMatrix);
+	{
+		/* Step 2: Calculate the Distance Matrix. */
+		nnPoint* distMatrixRow = (nnPoint*) malloc(N2*sizeof(nnPoint));		
+		int j;
+		for(j=0; j<N2; j++)
+		{
+			double dist = calc_dist( localDataSet->dataPoints[i], inputDataSet->dataPoints[j], D);
+			distMatrixRow[j].dist = dist;
+			distMatrixRow[j].index = inputDataSet->index[j];
+		}
+			
+		/* Step 3. Sort neighbors bu distance */
+		qsort( distMatrixRow, inputDataSet->N, sizeof(nnPoint), cmpfunc);
+		
+		/* Step 4: Store the K-first elements of the sorted DistMatrix. These are the Knn's! */
+		for(j=0; j<K; j++)
+		{	
+			(*KNN)[i][j].dist = distMatrixRow[j].dist;
+		 	(*KNN)[i][j].index = distMatrixRow[j].index;
+		}
+
+		/* Step 5:  Free distance matrix, AFTER we are done with the sorting and stuff */
+		free(distMatrixRow);	
+	}
 }  
 
 /*
@@ -103,7 +107,8 @@ void update_knn(DataSet *localDataSet, DataSet *inputDataSet, int K, /*in-out*/ 
 }
 
 
-/**
+/** DEPRECATED
+
 	distance_matrix calculates all distances between all datapoints and stores 
 	them in matric distMatrix [N,N] in an efficient way.
 
@@ -133,7 +138,8 @@ void distance_matrix_SEQ(DataSet *localDataSet, DataSet *givenDataSet,  nnPoint*
 	}
 }
 
-/**
+/** DEPRECATED
+
 	distance_matrix_OMP calculates all distances between all datapoints and stores 
 	them in matric distMatrix [N,N] in an efficientand way as well as in parallel.
 
