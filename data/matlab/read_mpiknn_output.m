@@ -6,10 +6,12 @@
 clear;
 load('knn_result.mat');
 
-fileID = fopen('../knn_indeces', 'r');
-N = 10;
-K = 3;
+fileID = fopen('../../mpi_knn_output', 'r');
+[N,K] = size(IDX);
+A = zeros(N,K);
+B = A;
 
+disp('Reading mpi_knn output file. Please wait...');
 for i=1:N
     for k=1:K
         
@@ -19,6 +21,8 @@ for i=1:N
     end
 end
 fclose(fileID);
+
+disp('Comparing matlab output with Savvas-MPI output...');
 
 errNN = sum(sum(A~=IDX));
 distErr = mean(mean((B-DIST.^2).^2));

@@ -20,7 +20,9 @@ void MPI_read_data( char* filename, DataSet* dataSet, int rank, int size)
 	MPI_Status status;
 	//"./data/bin_data/mnist_train_svd.bin"
 	MPI_File_open( MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
-	
+	if(fh <= 0)
+		printf("[MPI_KNN]: ERROR OPENING FILE\n");
+		
 	// Read Header
 	MPI_File_set_view(fh, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
 	MPI_File_read_at(fh, 0, &N, 1, MPI_INT, &status);

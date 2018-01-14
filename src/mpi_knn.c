@@ -4,15 +4,14 @@
 #include <sys/time.h>
 #include <mpi.h>
 
+#include "time_measure.h"
 #include "data_types.h"
 
 void write_knn_output();
-void tic();
-double toc();
 
 // For time performance evaluation
-struct timeval startwtime, endwtime;
-double knnTime, commTime;
+TimeInterval knnTime, commTime, knnChunkTime;
+
 // Some 
 int rank, size;
 int D, K;
@@ -39,8 +38,6 @@ int main(int argc, char** argv)
 	int THREAD_NUM = 1<<atoi(argv[2]);
   	omp_set_num_threads(THREAD_NUM);
 	
-	knnTime = 0;
-	commTime = 0;
 
 	/* Init MPI */
 	MPI_Init(&argc, &argv);
@@ -48,14 +45,20 @@ int main(int argc, char** argv)
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
 	/* Read all Data and Distribute among the rest of the processes*/
+	//MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
-	read_data_DUMMY( &localDataSet, 10, 4);
+	read_data_DUMMY(&localDataSet, 100, 20);
+
+
 	//MPI_read_data("./data/bin_data/mnist_train.bin", &localDataSet, rank, size);
 	D = localDataSet.D;
 	
 	/* 
 		Let the KNN-ing begin...
 	*/
+	MPI_Barrier(MPI_COMM_WORLD);
+	tic(&knnTime);
+
 	currentDataSet = localDataSet;	
 	int p;
 	for(p=0; p<size; p++)
@@ -65,40 +68,40 @@ int main(int argc, char** argv)
 		MPI_Request **Srequests[2];
 		DataSet nextDataSet;
 		
-		tic();
-		if(rank == 0)
-		{
-			Isend_dataset(&currentDataSet, rank+1, Srequests);
-			Ireceive_dataset(&nextDataSet, size-1, D, Rrequests);	
-		}
-		else if(rank == size-1)
-		{
-			Isend_dataset( &currentDataSet,  0, Srequests);
-			Ireceive_dataset(&nextDataSet, rank-1, D,  Rrequests);
-		}
-		else
-		{
-			Isend_dataset( &currentDataSet,  rank+1, Srequests);
-			Ireceive_dataset(&nextDataSet, rank-1, D, Rrequests);
-		}	
+		tic(&commTime);
+
+		if(size > 1)
+			if(rank == 0)
+			{
+				Isend_dataset(&currentDataSet, rank+1, Srequests);
+				Ireceive_dataset(&nextDataSet, size-1, D, Rrequests);	
+			}
+			else if(rank == size-1)
+			{
+				Isend_dataset( &currentDataSet,  0, Srequests);
+				Ireceive_dataset(&nextDataSet, rank-1, D,  Rrequests);
+			}
+			else
+			{
+				Isend_dataset( &currentDataSet,  rank+1, Srequests);
+				Ireceive_dataset(&nextDataSet, rank-1, D, Rrequests);
+			}	
 		
 		/*
 			Do thuh KNN thing, while nextDataSet is coming right up.
 		*/
+		tic(&knnChunkTime);
 		if(p==0) // First Iteration
 			knn( &localDataSet, &currentDataSet, K, &KNN );
 		else
 			update_knn( &localDataSet, &currentDataSet, K, &KNN );
-		
-		knnTime += toc();
-		
+		toc(&knnChunkTime);
 
 		// Wait for communication to finish up
 		wait_for_request(Rrequests,2);
 		wait_for_request(Srequests,2);
+		toc(&commTime);		
 		
-		commTime += toc();
-
 		/* 
 		Update Dataset pointers. For the first iterration of the algorithm,
 		we must NOT deallocate the currentDataSet, otherwise the localDataSet 
@@ -107,9 +110,15 @@ int main(int argc, char** argv)
 		if(p!=0)
 			deallocate_dataset(&currentDataSet);
 		currentDataSet = nextDataSet;
+
+		printf("[RANK %d]: Comm Time = %lf KNN chunk Time = %lf\n",rank, commTime.seqTime, knnChunkTime.seqTime);
 	}
 	
-	printf("[RANK %d]: KNN=%f COMM=%f\n",rank, knnTime, commTime);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	toc(&knnTime);
+	if(rank==0)
+		printf("knn-time = %lf\n",rank, knnTime.seqTime);
 
 	//write_knn_output();
 	
@@ -117,18 +126,6 @@ int main(int argc, char** argv)
 	return 	0;
 }
 
-
-void tic()
-{
-	gettimeofday (&startwtime, NULL);
-}
-
-double toc()
-{
-	gettimeofday (&endwtime, NULL);
-	return  (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
-			      + endwtime.tv_sec - startwtime.tv_sec);
-}
 
 
 /**
