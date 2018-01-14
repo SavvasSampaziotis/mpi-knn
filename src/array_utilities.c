@@ -130,7 +130,7 @@ void print_knn_matrix(nnPoint*** KNN, int N, int K)
 
 		for(k=0; k<K; k++)
 		{
-			printf("[%d %lf]\t", (*KNN)[i][k].index, (*KNN)[i][k].dist*10000);
+			printf("[%d %lf]\t", (*KNN)[i][k].index, (*KNN)[i][k].dist);
 		}
 
 		printf("\n");

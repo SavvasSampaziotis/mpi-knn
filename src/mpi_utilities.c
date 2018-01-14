@@ -13,7 +13,7 @@ void send_dataset(DataSet *dataSet, int dest);
 void receive_dataset(DataSet *dataSet, int src, int D);
 
 
-void MPI_read_data( char* filename, DataSet* dataSet, int rank, int size)
+int MPI_read_data( char* filename, DataSet* dataSet, int rank, int size)
 {
 	int D=0, N=0;
 	MPI_File fh;
@@ -49,8 +49,18 @@ void MPI_read_data( char* filename, DataSet* dataSet, int rank, int size)
 
 	// Calc the datapoint index of the dataset.
 	int i;
-	for(i=0;i<dataSet->N; i++)
-		dataSet->index[i] = i + rank*(subN-1) +1;
+	if(rank == size-1)
+	{
+		for(i=0;i<dataSet->N; i++)
+			dataSet->index[i] = i + rank*(subN-mod) +1;
+	}
+	else
+	{
+		for(i=0;i<dataSet->N; i++)
+			dataSet->index[i] = i + rank*(subN) +1;		
+	}
+	
+	return mod;
 }
 
 
