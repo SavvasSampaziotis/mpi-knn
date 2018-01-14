@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 	if(argc != 3)
 	{
 		printf("[MPI_KNN]: Error. Number of input args must be 2: ./mpi_knn <K> <T>, \
-			where K is the KNN num and T is the OpenMP threads_num = 2^T \n");
+			where K is the KNN num and T is the OpenMP threads_num\n");
 		return 1;
 	}
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	K++; // The self of each datapoint will be included in the final knn-set.
 	
 
-	int THREAD_NUM = 1<<atoi(argv[2]);
+	int THREAD_NUM = atoi(argv[2]);
   	omp_set_num_threads(THREAD_NUM);
 	
 
@@ -45,9 +45,9 @@ int main(int argc, char** argv)
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
 	/* Read all Data and Distribute among the rest of the processes*/
+	MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
-	//MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
-	read_data_DUMMY(&localDataSet, 100, 20);
+	//read_data_DUMMY(&localDataSet, 100, 20);
 
 
 	//MPI_read_data("./data/bin_data/mnist_train.bin", &localDataSet, rank, size);
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 	if(rank==0)
 		printf("knn-time = %lf\n",rank, knnTime.seqTime);
 
-	//write_knn_output();
+	write_knn_output();
 	
 	MPI_Finalize();
 	return 	0;
