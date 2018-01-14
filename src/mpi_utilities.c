@@ -13,13 +13,13 @@ void send_dataset(DataSet *dataSet, int dest);
 void receive_dataset(DataSet *dataSet, int src, int D);
 
 
-void MPI_read_data(const char* filename, DataSet* dataSet, int rank, int size)
+void MPI_read_data( char* filename, DataSet* dataSet, int rank, int size)
 {
 	int D=0, N=0;
 	MPI_File fh;
 	MPI_Status status;
-	MPI_File_open( MPI_COMM_WORLD, "./data/bin_data/mnist_train_svd.bin",\
-	 				MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+	//"./data/bin_data/mnist_train_svd.bin"
+	MPI_File_open( MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
 	
 	// Read Header
 	MPI_File_set_view(fh, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
@@ -49,9 +49,6 @@ void MPI_read_data(const char* filename, DataSet* dataSet, int rank, int size)
 	int i;
 	for(i=0;i<dataSet->N; i++)
 		dataSet->index[i] = i + rank*(subN-1) +1;
-
-	printf("subN=%d \t N=%d \n", subN,size);
-	///printf("N=%d \t D=%d \n", subN,D);
 }
 
 

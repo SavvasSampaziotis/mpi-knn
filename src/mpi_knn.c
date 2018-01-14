@@ -30,18 +30,16 @@ int main(int argc, char** argv)
 	{
 		printf("[MPI_KNN]: Error. Number of input args must be 2: ./mpi_knn <K> <T>, \
 			where K is the KNN num and T is the OpenMP threads_num = 2^T \n");
-
 		return 1;
 	}
 
 	K = atoi(argv[1]);
 	K++; // The self of each datapoint will be included in the final knn-set.
-	printf("K=%d\n",K);
+	
 
 	int THREAD_NUM = 1<<atoi(argv[2]);
   	omp_set_num_threads(THREAD_NUM);
 	
-
 	/* Init MPI */
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -49,7 +47,7 @@ int main(int argc, char** argv)
 	
 	/* Read all Data and Distribute among the rest of the processes*/
 	MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
-	//read_data_DUMMY(&localDataSet, 15, 4);
+	//MPI_read_data("./data/bin_data/mnist_train.bin", &localDataSet, rank, size);
 	D = localDataSet.D;
 	
 	/* 
@@ -60,8 +58,8 @@ int main(int argc, char** argv)
 	for(p=0; p<size; p++)
 	{
 		// Communicate next datasets in RING-Topology
-		MPI_Request **Rrequests[3];
-		MPI_Request **Srequests[3];
+		MPI_Request **Rrequests[2];
+		MPI_Request **Srequests[2];
 		DataSet nextDataSet;
 		
 		tic();
@@ -90,14 +88,14 @@ int main(int argc, char** argv)
 			update_knn( &localDataSet, &currentDataSet, K, &KNN );
 		
 		toc();
-		printf("[RANK %d]: KNN-Time: %f\n",rank, seq_time);
+		printf("[RANK %d]: KNN Time: %f\n",rank, seq_time);
 
 		// Wait for communication to finish up
 		wait_for_request(Rrequests,2);
 		wait_for_request(Srequests,2);
 		
 		toc();
-		printf("[RANK %d]: Sub-DataSet Tranfer Time: %f\n",rank, seq_time);
+		printf("[RANK %d]: Tranfer Time: %f\n",rank, seq_time);
 
 		/* 
 		Update Dataset pointers. For the first iterration of the algorithm,
@@ -111,7 +109,7 @@ int main(int argc, char** argv)
 
 	write_knn_output();
 	
-	
+	/*
 	int i;
 	for(i=0; i<size; i++)
 	{
@@ -120,7 +118,7 @@ int main(int argc, char** argv)
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 	
-	//int i;
+	
 	for(i=0;i<size;i++)
 	{
 		if(rank==i)
@@ -132,9 +130,7 @@ int main(int argc, char** argv)
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
-		
-
-
+		*/
 	MPI_Finalize();
 	return 	0;
 }
@@ -184,14 +180,12 @@ void write_knn_output()
 	MPI_File_set_view(fh, 0, MPI_KNN_TYPE, MPI_KNN_TYPE, "native",  MPI_INFO_NULL);
 
 	MPI_Status status;
-	int dataLength = (localDataSet.N-1)*K;
+	int dataLength = (localDataSet.N-1)*(K-1);
 	int offset = (dataLength)*rank;
 	int c=0,i,j;
 	for(i=0;i<localDataSet.N;i++)
-		for(j=0;j<K;j++)
+		for(j=1;j<K;j++)
 		{	
-			//KNN[i][j].index = rank*100+c;
-			//KNN[i][j].dist = rank*100.0 + c*0.1; For testing purposes
 			MPI_File_write_at(fh, offset+c, &(KNN[i][j]), 1, MPI_KNN_TYPE, &status);
 			c++;
 		}
