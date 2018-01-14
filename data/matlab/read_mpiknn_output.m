@@ -26,6 +26,6 @@ disp('Comparing matlab output with Savvas-MPI output...');
 
 errNN = sum(sum(A~=IDX));
 distErr = mean(mean((B-DIST.^2).^2));
-disp(['Num of wrong neighbors = ',num2str(erNN)]);
-disp(['KNN dist MSE = ',num2str(distErr)]);
+disp(['Num of wrong neighbors = ',num2str(errNN)]);
+disp(['KNN dist MSE = ',num2str(distErr),'%']);
 

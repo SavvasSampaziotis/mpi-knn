@@ -39,14 +39,14 @@ fprintf('...reading data...\n');
 fprintf('   - using file %s\n', filename)
 
 % IO data file
-ioData = matfile( ['./raw_data/',filename '.mat'] );
+ioData = matfile( ['../raw_data/',filename '.mat'] );
 
 % read variables
 X = ioData.(varX);
 L = ioData.(varL);
 
-X = X(1:15,1:4);
-L = L(1:15);
+% X = X(1:15,1:4);
+% L = L(1:15);
 
 
 % number of points
