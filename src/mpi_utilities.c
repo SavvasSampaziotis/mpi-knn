@@ -160,6 +160,7 @@ void receive_dataset(DataSet *dataSet,  int src, int D){
 	MPI_Status status;
 	int N;
 	
+	// WARNING: Need to implement this differently
 	MPI_Probe(src, INDEX_TAG, MPI_COMM_WORLD, &status);
 	MPI_Get_count(&status, MPI_INT, &N);
 

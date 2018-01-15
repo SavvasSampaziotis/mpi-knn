@@ -1,0 +1,85 @@
+[mpiexec@wn025.grid.auth.gr] verify_arguments (./ui/mpiexec/utils.c:1110): no executable specified
+[mpiexec@wn025.grid.auth.gr] HYD_uii_mpx_get_parameters (./ui/mpiexec/utils.c:1290): argument verification failed
+
+Usage: ./mpiexec [global opts] [exec1 local opts] : [exec2 local opts] : ...
+
+Global options (passed to all executables):
+
+  Global environment options:
+    -genv {name} {value}             environment variable name and value
+    -genvlist {env1,env2,...}        environment variable list to pass
+    -genvnone                        do not pass any environment variables
+    -genvall                         pass all environment variables (default)
+
+  Other global options:
+    -f {name}                        file containing the host names
+    -wdir {dirname}                  working directory to use
+
+
+Local options (passed to individual executables):
+
+  Local environment options:
+    -env {name} {value}              environment variable name and value
+    -envlist {env1,env2,...}         environment variable list to pass
+    -envnone                         do not pass any environment variables
+    -envall                          pass all environment variables (default)
+
+  Other local options:
+    -n/-np {value}                   number of processes
+    {exec_name} {args}               executable name and arguments
+
+
+Hydra specific options (treated as global):
+
+  Bootstrap options:
+    -bootstrap                       bootstrap server to use
+    -bootstrap-exec                  executable to use to bootstrap processes
+    -enable-x/-disable-x             enable or disable X forwarding
+
+  Proxy options (only needed for persistent mode):
+    -boot-proxies                    boot proxies to run in persistent mode
+    -boot-foreground-proxies         boot foreground proxies (persistent mode)
+    -shutdown-proxies                shutdown persistent mode proxies
+    -proxy-port                      port for proxies to listen (boot proxies)
+    -use-persistent                  use persistent mode proxies to launch
+
+  Communication sub-system options:
+    -css                             communication sub-system to use
+
+  Resource management kernel options:
+    -rmk                             resource management kernel to use
+
+  Hybrid programming options:
+    -ranks-per-proc                  assign so many ranks to each process
+    -enable/-disable-pm-env          process manager environment settings
+
+  Process-core binding options:
+    -binding                         process-to-core binding mode
+    -bindlib                         process-to-core binding library (plpa)
+
+  Checkpoint/Restart options:
+    -ckpoint-interval                checkpoint interval
+    -ckpoint-prefix                  checkpoint file prefix
+    -ckpointlib                      checkpointing library (blcr)
+    -ckpoint-restart                 restart a checkpointed application
+
+  Other Hydra options:
+    -verbose                         verbose mode
+    -info                            build information
+    -print-rank-map                  print rank mapping
+    -print-all-exitcodes             print exit codes of all processes
+4 1
+Size=4
+[RANK 3]: Comm Time = 0.036973 KNN chunk Time = 60.512444
+[RANK 2]: Comm Time = 0.049421 KNN chunk Time = 79.885980
+[RANK 1]: Comm Time = 0.054354 KNN chunk Time = 114.853800
+[RANK 3]: Comm Time = 19.420698 KNN chunk Time = 60.599299
+[RANK 0]: Comm Time = 60.566901 KNN chunk Time = 113.871321
+Fatal error in MPI_Probe: Other MPI error, error stack:
+MPI_Probe(114)....................: MPI_Probe(src=2, tag=5, MPI_COMM_WORLD, status=0x7ffe673a4d50) failed
+MPIDI_CH3I_Progress(150)..........: 
+MPID_nem_mpich2_blocking_recv(948): 
+MPID_nem_tcp_connpoll(1720).......: 
+state_commrdy_handler(1561).......: 
+MPID_nem_tcp_send_queued(127).....: writev to socket failed - Bad address
+Terminated (signal 15)

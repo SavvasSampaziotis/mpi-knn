@@ -1,0 +1,18 @@
+4 1
+[RANK 3]: Comm Time = 26.779277 KNN chunk Time = 23.267101
+[RANK 2]: Comm Time = 32.244467 KNN chunk Time = 26.741087
+[RANK 0]: Comm Time = 32.255993 KNN chunk Time = 15.844873
+[RANK 1]: Comm Time = 32.257918 KNN chunk Time = 32.204299
+[RANK 0]: Comm Time = 26.333538 KNN chunk Time = 16.949488
+[RANK 3]: Comm Time = 33.375053 KNN chunk Time = 23.523204
+[RANK 1]: Comm Time = 27.907499 KNN chunk Time = 26.296160
+[RANK 2]: Comm Time = 27.922495 KNN chunk Time = 27.860808
+[RANK 3]: Comm Time = 26.934714 KNN chunk Time = 21.793104
+[RANK 2]: Comm Time = 29.011173 KNN chunk Time = 26.886616
+[RANK 0]: Comm Time = 30.594383 KNN chunk Time = 14.739029
+[RANK 1]: Comm Time = 29.019569 KNN chunk Time = 28.971951
+[RANK 0]: Comm Time = 29.302213 KNN chunk Time = 15.239761
+[RANK 3]: Comm Time = 33.986332 KNN chunk Time = 21.441377
+[RANK 1]: Comm Time = 31.896900 KNN chunk Time = 29.264521
+[RANK 2]: Comm Time = 31.905121 KNN chunk Time = 31.851692
+knn-time = 121.085859

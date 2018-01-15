@@ -1,34 +1,60 @@
 
-%% Parse Data
-filename = '../dataout/text';
-fileID = fopen(filename, 'r');
-
-D = fscanf(fileID, "%d %d\n");
-
-formatSpec = "[RANK %d]: Comm Time = %lf KNN chunk Time = %lf\n"
-A = fscanf(fileID, formatSpec);
-
-formatSpec = "knn-time = %lf"
-KnnTime = fscanf(fileID, formatSpec);
-
-fclose(fileID);
-
-%% Re-Format data
-N = length(A);
-B = zeros(N/3,3);
-b = 0;
-for i=1:3:N
-    b = b + 1;
-    B(b,1) = A(i);
-    B(b,2) = A(i+1);
-    B(b,3) = A(i+2);
+%% Traverse through all the files
+k = 1;
+filename = {};
+for i=7:9
+    filename{k} = strcat(...
+        '../dataout/sampazio_mpiknn.o428420',num2str(i));
+    k = k + 1;
 end
 
-temp = [B(:,1), B(:,2)-B(:,3)];
-procNum = max(B(:,1));
-ExtraCommTime = zeros(procNum, N/3);
-for i=0:procNum
-%     ExtraCommTime(i,:) = 0;
-    temp( i==temp(:,1), :)
+for i=10:14
+    filename{k} = strcat(...
+        '../dataout/sampazio_mpiknn.o42842',num2str(i));
+    k = k + 1;
 end
-ExtraCommTime
+
+k=1;
+A = zeros(1,4);
+for i=1:length(filename)
+    [r, metrics] = parse_jobfile(filename{i});
+    if r==0
+        A(k,:) = metrics;
+        k = k + 1;
+    end
+end
+
+%% Thread Effect
+figure(1); clf;
+subplot(2,1,1);
+time2 = A(A(:,1)==2,3)/max(time2)*100;
+time4 = A(A(:,1)==4, 3)/max(time4)*100;
+time4 = [time4(1:end);0];
+bar([time2,time4]);
+xlabel('Thread Num'); ylabel('Speed-up %');
+title('KNN-Time Speed-up Comparison');
+legend('2 Nodes', '4 Nodes');
+xticks([1 2 3 4])
+xticklabels({'1' '2' '4' '8'})
+
+subplot(2,1,2);
+time2 = A(A(:,1)==2,3);
+time4 = A(A(:,1)==4, 3);
+time4 = [time4(1:end);0];
+bar([time2,time4]);
+xlabel('Thread Num'); ylabel('KNN-Time [sec]');
+title('KNN-Time Actual Calc TIme');
+legend('2 Nodes', '4 Nodes');
+xticks([1 2 3 4])
+xticklabels({'1' '2' '4' '8'})
+
+figure(2); clf;
+time2 = A(A(:,1)==2,4);
+time4 = A(A(:,1)==4, 4);
+time4 = [time4(1:end);0];
+bar([time2,time4]);
+xlabel('Thread Num'); ylabel('Wait-Time [sec]');
+title('Average Wait Time');
+legend('2 Nodes', '4 Nodes');
+xticks([1 2 3 4])
+xticklabels({'1' '2' '4' '8'})

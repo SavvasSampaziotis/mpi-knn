@@ -46,10 +46,10 @@ int main(int argc, char** argv)
 		printf("Size=%d\n", size);
 
 	/* Read all Data and Distribute among the rest of the processes*/
-	//mod = MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
+	mod = MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
-	read_data_DUMMY(&localDataSet, 100, 20);
-	mod = 0;
+	//read_data_DUMMY(&localDataSet, 100, 20);
+	
 
 	//MPI_read_data("./data/bin_data/mnist_train.bin", &localDataSet, rank, size);
 	D = localDataSet.D;
@@ -87,6 +87,7 @@ int main(int argc, char** argv)
 				receive_dataset(&nextDataSet, rank-1, D);
 			}	
 		toc(&commTime);	
+		
 		/*
 			Do thuh KNN thing, while nextDataSet is coming right up.
 		*/

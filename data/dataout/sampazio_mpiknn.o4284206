@@ -1,0 +1,12 @@
+1 8
+Fatal error in MPI_Wait: Invalid MPI_Request, error stack:
+MPI_Wait(157): MPI_Wait(request=0x7ffd0f46b5d8, status0x7ffd0f46b3e0) failed
+MPI_Wait(77).: Invalid MPI_Request
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 39887 RUNNING AT wn019.grid.auth.gr
+=   EXIT CODE: 1
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================

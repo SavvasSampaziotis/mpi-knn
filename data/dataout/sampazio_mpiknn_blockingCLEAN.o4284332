@@ -1,0 +1,6 @@
+4 1
+[RANK 3]: Comm Time = 0.036973 KNN chunk Time = 60.512444
+[RANK 2]: Comm Time = 0.049421 KNN chunk Time = 79.885980
+[RANK 1]: Comm Time = 0.054354 KNN chunk Time = 114.853800
+[RANK 3]: Comm Time = 19.420698 KNN chunk Time = 60.599299
+[RANK 0]: Comm Time = 60.566901 KNN chunk Time = 113.871321
