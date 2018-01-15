@@ -1,4 +1,10 @@
+/**
+	Test bed for the knn_utilities and array_utilities code.
 
+	Mainly whatever that didn have to do direclty with MPI has been tested here. 
+	 
+ Author: Savvas Sampaziotis
+*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>

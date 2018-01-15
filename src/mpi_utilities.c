@@ -1,4 +1,8 @@
+/**
+	These are a variaty of functions and wrappers of MPI utilities.
 
+ Author: Savvas Sampaziotis
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>

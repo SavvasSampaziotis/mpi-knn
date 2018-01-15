@@ -2,7 +2,7 @@
  knn.c
 
  The knn library that handles the parallel
-  or non parallel executio of the knn algorithm on a block of data
+  or non parallel execution of the knn algorithm on a block of data
 
 	Author: Savvas Sampaziotis
 */

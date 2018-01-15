@@ -1,3 +1,8 @@
+/**
+	Time structs for easy time-interval measuring.
+	
+ Author: Savvas Sampaziotis
+*/
 
 #include <sys/time.h>
 

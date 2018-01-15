@@ -1,5 +1,6 @@
 /**
-	This is a test bed for various MPI utilities 
+	This is a test-bed for various MPI utilities 
+	
 	Author: Savvas Sampaziotis
 **/
 	

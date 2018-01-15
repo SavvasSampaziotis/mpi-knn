@@ -1,4 +1,10 @@
-
+/**
+	These are a variaty of function regarding the
+	 custom structs and datatypes used throughout the mpi-knn project.
+	
+	Mainly allc and dealloc functions, and print functions...
+ Author: Savvas Sampaziotis
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

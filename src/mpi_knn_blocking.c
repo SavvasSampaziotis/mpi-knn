@@ -1,4 +1,8 @@
-
+/**
+	This is the blocking-communication cerison of my mpi-knn implementation.
+ Author: Savvas Sampaziotis
+*/
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -87,7 +91,7 @@ int main(int argc, char** argv)
 				receive_dataset(&nextDataSet, rank-1, D);
 			}	
 		toc(&commTime);	
-		
+
 		/*
 			Do thuh KNN thing, while nextDataSet is coming right up.
 		*/

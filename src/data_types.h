@@ -1,7 +1,7 @@
 /**
  data_types.h
 
- Various Useful Data structs that will be used in .c files of the mpi-knn project  
+ Various Nessesary Data structs that will be used in .c files of the mpi-knn project  
 
 	Author: Savvas Sampaziotis
 */
