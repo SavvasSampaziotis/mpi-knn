@@ -1,7 +1,8 @@
 
 #TARGET=test_knn
 #TARGET=test_mpi
-TARGET=mpi_knn
+#TARGET=mpi_knn
+TARGET=mpi_knn_blocking
 
 
 ifeq ($(TARGET),test_knn)
