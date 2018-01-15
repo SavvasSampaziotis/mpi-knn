@@ -34,16 +34,17 @@ int main(int argc, char** argv)
 	K = atoi(argv[1]);
 	K++; // The self of each datapoint will be included in the final knn-set.
 	
-
 	int THREAD_NUM = atoi(argv[2]);
   	omp_set_num_threads(THREAD_NUM);
 	
-
 	/* Init MPI */
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	
+	if(rank==0)
+		printf("Size=%d\n", size);
+
 	/* Read all Data and Distribute among the rest of the processes*/
 	mod = MPI_read_data("./data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
 	//MPI_read_data("./mpi-knn/data/bin_data/mnist_train_svd.bin", &localDataSet, rank, size);
